@@ -39,4 +39,41 @@ function drive(from, to) {
 }
 
 for (const [from, to] of [[0, 1], [1, 2], [2, 3], [3, 4], [1, 0], [2, 1], [3, 2], [4, 3]]) drive(from, to);
-console.log(`check-motion: ${positions.length} renders and 8 directed transitions OK`);
+
+// A real browser can hand the callback a timestamp that PRECEDES the moment the
+// frame was scheduled, which makes the first `t` slightly negative. From
+// position 0 that produced a negative position, an invalid segment index and a
+// throw that killed the loop. This case is the regression.
+assert.doesNotThrow(
+  () => renderPosition(-0.006),
+  'renderPosition must not throw on a negative position',
+);
+assert.doesNotThrow(
+  () => renderPosition(4.2),
+  'renderPosition must not throw above the last segment',
+);
+
+function driveWithEarlyTimestamp(from, to) {
+  const rendered = [];
+  let completions = 0;
+  playBetween(from, to, (position) => rendered.push(position), () => completions++);
+  let steps = 0;
+  while (pending.size) {
+    assert.ok(++steps < 1000, `${from}→${to}: animation did not terminate with an early timestamp`);
+    const [id, callback] = pending.entries().next().value;
+    pending.delete(id);
+    now += 1000 / 30;
+    callback(steps === 1 ? now - 60 : now);
+  }
+  assert.equal(completions, 1, `${from}→${to} (early): done must be called exactly once`);
+  assert.equal(rendered.at(-1), to, `${from}→${to} (early): final render must equal target`);
+  for (const position of rendered) {
+    assert.ok(position >= 0, `${from}→${to} (early): rendered a negative position ${position}`);
+  }
+}
+
+for (const [from, to] of [[0, 1], [1, 2], [2, 3], [3, 4]]) driveWithEarlyTimestamp(from, to);
+console.log(
+  `check-motion: 12 renders, 8 directed transitions and 4 early-timestamp ` +
+    `transitions OK; positions outside 0-4 are clamped`,
+);
