@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="es">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MIDI / Estudios de movimiento</title>
+<style>
+  * { box-sizing: border-box }
+  body { margin: 0; background: #111; color: #f4f4f4; font: 15px ui-monospace, monospace }
+  header { padding: 22px 4vw; border-bottom: 1px solid currentColor }
+  section { margin: 4vh 4vw 9vh }
+  p { margin: 0 0 12px }
+  .stage { display: block; width: 100%; height: clamp(340px, 75vh, 850px); overflow: hidden; border: 1px solid #666; padding: 0; background: #111 }
+  button.stage { cursor: pointer; touch-action: manipulation }
+  button.stage:focus-visible { outline: 3px solid #f4f4f4; outline-offset: 5px }
+  @media (max-width: 600px) {
+    .stage { height: 64svh }
+  }
+</style>
+<header>MIDI / laboratorio de movimiento</header>
+<main>
+  <section><p>escena 1 · click o toque</p><button class="stage" id="scene-one" aria-label="Abrir la composición" aria-pressed="false"></button></section>
+  <section><p>transición 2</p><button class="stage" id="scene-two" aria-label="Reproducir transición 2"></button></section>
+  <section><p>transición 3</p><button class="stage" id="scene-three" aria-label="Reproducir transición 3"></button></section>
+  <section><p>transición 4</p><button class="stage" id="scene-four" aria-label="Reproducir transición 4"></button></section>
+</main>
+<script type="module">
+  import {draw, smooth} from './motion.mjs';
+  import {drawTransition, drawTransitionThree, drawTransitionFour} from './transition.mjs';
+
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)');
+  const passage = document.querySelector('#scene-one');
+
+  function motion(element, duration, curve) {
+    let current = 0;
+    let pending = 0;
+    element.innerHTML = draw(current);
+    return (target) => {
+      cancelAnimationFrame(pending);
+      if (reduce.matches) {
+        current = target;
+        element.innerHTML = draw(current);
+        return;
+      }
+      const from = current;
+      const start = performance.now();
+      function step(now) {
+        const time = Math.min(1, (now - start) / duration);
+        current = from + (target - from) * curve(time);
+        element.innerHTML = draw(current);
+        if (time < 1) pending = requestAnimationFrame(step);
+      }
+      pending = requestAnimationFrame(step);
+    };
+  }
+
+  const movePassage = motion(passage, 1600, smooth);
+  let open = false;
+
+  passage.addEventListener('click', () => {
+    open = !open;
+    passage.setAttribute('aria-pressed', String(open));
+    passage.setAttribute('aria-label', open ? 'Cerrar la composición' : 'Abrir la composición');
+    movePassage(Number(open));
+  });
+  function mountTransition(transition, render) {
+    let playback = 0;
+    transition.innerHTML = render(0);
+    transition.addEventListener('click', () => {
+      cancelAnimationFrame(playback);
+      if (reduce.matches) {
+        transition.innerHTML = render(119);
+        return;
+      }
+      const start = performance.now();
+      function play(now) {
+        const frame = Math.min(119, Math.floor((now - start) * 0.03));
+        transition.innerHTML = render(frame);
+        if (frame < 119) playback = requestAnimationFrame(play);
+      }
+      playback = requestAnimationFrame(play);
+    });
+  }
+
+  mountTransition(document.querySelector('#scene-two'), drawTransition);
+  mountTransition(document.querySelector('#scene-three'), drawTransitionThree);
+  mountTransition(document.querySelector('#scene-four'), drawTransitionFour);
+</script>
+</html>

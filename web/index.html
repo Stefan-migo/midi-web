@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>MIDI / materia en movimiento</title><meta name="description" content="MIDI Colectivo Artístico. Una composición en movimiento."><link rel="icon" href="assets/favicon.svg"><link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet"><link rel="stylesheet" href="style.css"></head>
+<body>
+<main id="world" data-scene="0">
+<div id="composition">
+<div id="motion-art" aria-hidden="true"></div>
+<svg id="hit-regions" viewBox="0 0 1200 900" preserveAspectRatio="xMidYMid meet" aria-label="Composición interactiva de MIDI"><g id="pieces"></g></svg>
+</div>
+<a class="signature" href="#inicio" aria-label="MIDI inicio"><img src="assets/midi-horizontal-blanco.svg" alt="MIDI Colectivo Artístico" width="534" height="179"></a>
+<div class="coordinates" aria-hidden="true">M / <span id="coordinate">000 : 000</span></div>
+<div class="scene-copy"><h1 id="scene-title">MIDI</h1><p id="scene-subtitle">materia en movimiento</p></div>
+<div id="whisper" aria-live="polite">tocá una forma</div>
+<nav aria-label="Escenas" class="scene-map"><a href="#inicio" aria-label="Inicio" title="Inicio"></a><a href="#portafolio" aria-label="Portafolio" title="Portafolio"></a><a href="#nosotros" aria-label="Nosotros" title="Nosotros"></a><a href="#contacto" aria-label="Contacto" title="Contacto"></a><a href="#exploraciones" aria-label="Exploraciones" title="Exploraciones"></a></nav>
+<button id="advance" aria-label="Siguiente composición">00 / 03 <span>↗</span></button>
+<button id="motion" aria-label="Pausar movimiento">Ⅱ</button>
+<section id="reveal" hidden aria-labelledby="reveal-title"><button id="close" aria-label="Cerrar contenido">×</button><div id="reveal-body"></div></section>
+</main>
+<script type="module" src="app.js"></script></body></html>

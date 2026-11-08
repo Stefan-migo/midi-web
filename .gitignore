@@ -1,0 +1,10 @@
+# Dependencias
+node_modules/
+
+# Sistema / editor
+.DS_Store
+Thumbs.db
+*.log
+
+# Copia de referencia del sitio original (no es parte del proyecto)
+MIDI/

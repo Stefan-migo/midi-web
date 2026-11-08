@@ -1,0 +1,21 @@
+{
+  "name": "midi-motion",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "studio": "remotion studio index.jsx --port=3030",
+    "render": "remotion render index.jsx",
+    "demo": "python -m http.server 4173 --bind 127.0.0.1 --directory public"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@remotion/cli": "^4.0.541",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "remotion": "^4.0.541"
+  },
+  "private": true
+}
