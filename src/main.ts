@@ -90,12 +90,8 @@ function mountPieces(): void {
     piece.setAttribute('class', 'piece');
     piece.setAttribute('role', 'button');
     piece.setAttribute('tabindex', '0');
-    piece.setAttribute(
-      'aria-label',
-      sceneIndex === 0
-        ? `Desplegar universo MIDI, fragmento ${index + 1}`
-        : `Abrir ${routes[sceneIndex]?.scene.navLabel ?? ''}, fragmento ${index + 1}`,
-    );
+    const targetLabel = sceneIndex === 0 ? routes[1]?.scene.navLabel : routes[sceneIndex]?.scene.navLabel;
+    piece.setAttribute('aria-label', `Abrir ${targetLabel ?? 'contenido'}, fragmento ${index + 1}`);
     const attributes = { x, y, width: right - x, height: bottom - y };
     for (const [key, value] of Object.entries(attributes)) {
       piece.setAttribute(key, String(value));
@@ -180,6 +176,9 @@ function openContent(index: number): void {
   } else {
     revealBody.innerHTML = `<h2 id="reveal-title">${data.title}</h2>`;
   }
+  for (const sibling of [...world.children]) {
+    if (sibling !== reveal) (sibling as HTMLElement).inert = true;
+  }
   reveal.hidden = false;
   reveal.setAttribute('role', 'dialog');
   reveal.setAttribute('aria-modal', 'true');
@@ -206,6 +205,11 @@ function changeArt(step: number): void {
 function closeContent(): void {
   const wasOpen = !reveal.hidden;
   reveal.hidden = true;
+  if (wasOpen) {
+    for (const sibling of [...world.children]) {
+      if (sibling !== reveal) (sibling as HTMLElement).inert = false;
+    }
+  }
   if (wasOpen && returnFocus) returnFocus.focus();
 }
 

@@ -24,6 +24,7 @@ const ROUTES = [
 const failures = [];
 const titles = new Map();
 const headings = new Map();
+const galleryAlts = new Map();
 
 function extract(html, pattern, label) {
   const match = html.match(pattern);
@@ -69,9 +70,27 @@ for (const route of ROUTES) {
   });
 
   expect('prerendered reveal body', () => {
-    const body = extract(html, /<div id="reveal-body">([\s\S]*?)<\/div>/i, '#reveal-body');
+    const body = extract(html, /<div id="reveal-body">([\s\S]*?)<\/section>/i, '#reveal-body');
     assert.match(body, /<h2 id="reveal-title">/i, `${where}: missing semantic reveal heading`);
+    const images = [...body.matchAll(/<img\b[^>]*>/gi)];
+    if (route.type === 'CollectionPage') {
+      assert.equal(images.length, 4, `${where}: expected four gallery images in #reveal-body`);
+      const alts = images.map(([image]) => extract(image, /\balt="([^"]*)"/i, 'gallery image alt'));
+      assert.ok(alts.every((alt) => alt.trim().length > 0), `${where}: gallery image alt must be non-empty`);
+      assert.equal(new Set(alts).size, images.length, `${where}: gallery image alts must all differ`);
+      galleryAlts.set(route.path, alts);
+    } else {
+      assert.equal(images.length, 0, `${where}: #reveal-body must not contain gallery images`);
+    }
     if (route.path === '/nosotros/') assert.ok((body.match(/<p>/g) ?? []).length > 0, `${where}: expected paragraph in #reveal-body`);
+  });
+
+  expect('accessibility landmarks', () => {
+    assert.doesNotMatch(html, /<[^>]+id="whisper"[^>]*aria-live/i, `${where}: #whisper must not have aria-live`);
+    const hitRegions = html.match(/<svg\b[^>]*id="hit-regions"[^>]*>/i)?.[0] ?? '';
+    assert.ok(hitRegions, `${where}: missing #hit-regions`);
+    assert.match(hitRegions, /\brole="group"/i, `${where}: #hit-regions must have group role`);
+    assert.match(hitRegions, /aria-label="[^"]+"/i, `${where}: #hit-regions must describe the interaction`);
   });
 
   expect('title', () => {
@@ -162,6 +181,17 @@ for (const route of ROUTES) {
 }
 
 try {
+  const source = await readFile(join('src', 'main.ts'), 'utf8');
+  assert.match(source, /sceneIndex === 0 \? routes\[1\]\?\.scene\.navLabel : routes\[sceneIndex\]\?\.scene\.navLabel/, 'src/main.ts: hit-region names must use the destination scene navLabel');
+  assert.match(source, /`Abrir \$\{targetLabel \?\? 'contenido'\}, fragmento \$\{index \+ 1\}`/, 'src/main.ts: each hit region name must include the scene navLabel');
+} catch (error) { failures.push(`src/main.ts: ${error.message}`); }
+
+try {
+  const css = await readFile(join('src', 'styles', 'style.css'), 'utf8');
+  assert.doesNotMatch(css, /\.split\b/, 'src/styles/style.css: removed .split selectors must stay absent');
+} catch (error) { failures.push(`src/styles/style.css: ${error.message}`); }
+
+try {
   const llms = await readFile(join('dist', 'llms.txt'), 'utf8');
   assert.ok(llms.startsWith('# '), 'dist/llms.txt: expected # heading');
   const lines = llms.split('\n').filter((line) => line.startsWith('- ['));
@@ -208,6 +238,14 @@ function checkUnique(label, map) {
     values.length,
     `${label} are not unique across routes: ${JSON.stringify([...map])}`,
   );
+}
+
+if (galleryAlts.size === 2) {
+  try {
+    assert.deepEqual(galleryAlts.get('/portafolio/'), galleryAlts.get('/exploraciones/'), 'gallery routes must carry the same four alts in the same order');
+  } catch (error) {
+    failures.push(`dist gallery routes: ${error.message}`);
+  }
 }
 
 if (titles.size === ROUTES.length) {

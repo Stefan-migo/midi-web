@@ -57,12 +57,13 @@ function describe(scene: Scene, site: Site): string {
 }
 
 function revealMarkup(scene: Scene): string {
-  const gallery = scene.gallery?.[0];
-  const heading = gallery?.title ?? scene.body?.heading ?? scene.title;
+  const gallery = scene.gallery ?? [];
+  const firstGalleryItem = gallery[0];
+  const heading = firstGalleryItem?.title ?? scene.body?.heading ?? scene.title;
   const paragraphs = (scene.body?.paragraphs ?? []).map((text) => `<p>${escapeHtml(text)}</p>`).join('');
   const links = (scene.body?.links ?? []).map((link) => `<a href="${escapeHtml(link.href)}">${escapeHtml(link.label)} ↗</a>`).join('');
-  const art = gallery
-    ? `<img id="art" src="${escapeHtml(gallery.src)}" alt="${escapeHtml(gallery.alt)}"><div class="work-switch"><button id="previous" aria-label="Pieza anterior">←</button><span id="work-index">01 / ${String(scene.gallery?.length ?? 0).padStart(2, '0')}</span><button id="next" aria-label="Pieza siguiente">→</button></div>`
+  const art = gallery.length
+    ? `<div class="gallery-items">${gallery.map((item) => `<img src="${escapeHtml(item.src)}" alt="${escapeHtml(item.alt)}">`).join('')}</div><div class="work-switch"><button id="previous" aria-label="Pieza anterior">←</button><span id="work-index">01 / ${String(gallery.length).padStart(2, '0')}</span><button id="next" aria-label="Pieza siguiente">→</button></div>`
     : '';
   return `<h2 id="reveal-title">${escapeHtml(heading)}</h2>${paragraphs}${links}${art}`;
 }

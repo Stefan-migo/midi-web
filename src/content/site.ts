@@ -19,10 +19,10 @@ export const site: Site = {
       title: 'Archivo de formas', // web/app.js:10
       subtitle: 'exploraciones / identidad MIDI', // web/app.js:61
       gallery: [
-        { src: 'assets/estudio-7.png', alt: 'Composición gráfica geométrica en blanco y negro' },
-        { src: 'assets/estudio-8.png', alt: 'Composición gráfica geométrica en blanco y negro' },
-        { src: 'assets/estudio-9.png', alt: 'Composición gráfica geométrica en blanco y negro' },
-        { src: 'assets/estudio-10.png', alt: 'Composición gráfica geométrica en blanco y negro' },
+        { src: 'assets/estudio-7.png', alt: 'Formas blancas amplias sobre fondo negro, con franjas horizontales y módulos rectangulares' },
+        { src: 'assets/estudio-8.png', alt: 'Cuatro bloques negros sobre fondo blanco junto a un contorno rectangular' },
+        { src: 'assets/estudio-9.png', alt: 'Composición bicolor con grandes áreas negras y marcos rectangulares blancos' },
+        { src: 'assets/estudio-10.png', alt: 'Marcos blancos de distintos tamaños dispersos sobre fondo negro' },
       ],
     },
     {
@@ -63,10 +63,10 @@ export const site: Site = {
       title: 'Exploraciones', // web/app.js:10
       subtitle: 'archivo / identidad en proceso', // web/app.js:61
       gallery: [
-        { src: 'assets/estudio-7.png', alt: 'Composición gráfica geométrica en blanco y negro' },
-        { src: 'assets/estudio-8.png', alt: 'Composición gráfica geométrica en blanco y negro' },
-        { src: 'assets/estudio-9.png', alt: 'Composición gráfica geométrica en blanco y negro' },
-        { src: 'assets/estudio-10.png', alt: 'Composición gráfica geométrica en blanco y negro' },
+        { src: 'assets/estudio-7.png', alt: 'Formas blancas amplias sobre fondo negro, con franjas horizontales y módulos rectangulares' },
+        { src: 'assets/estudio-8.png', alt: 'Cuatro bloques negros sobre fondo blanco junto a un contorno rectangular' },
+        { src: 'assets/estudio-9.png', alt: 'Composición bicolor con grandes áreas negras y marcos rectangulares blancos' },
+        { src: 'assets/estudio-10.png', alt: 'Marcos blancos de distintos tamaños dispersos sobre fondo negro' },
       ],
     },
   ],

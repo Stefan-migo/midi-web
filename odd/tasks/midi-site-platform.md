@@ -208,5 +208,36 @@ with `lines.join('\\n')`, a literal backslash-n, so the whole file was one line;
 and its summary concatenated every scene's body into a run-on paragraph. Now it
 uses only the collective's own paragraphs, capped on a word boundary.
 
-Known, not blocking: gallery routes prerender only the first image. Listing all
-four would be better for AEO and is a one-line change when it matters.
+Known, not blocking: gallery routes prerender all four images and their distinct
+alt text inside the hidden reveal body so crawlers and assistive technology can
+access the complete gallery. Runtime opening still replaces that body.
+
+L11 (T7 safe subset): gallery items now have distinct, factual Spanish alt text;
+route documents prerender every gallery image. Removed only the three `.split`
+selectors after searching markup and JS; no `.split` class reference exists.
+`#whisper` is a plain hint, not a live region. The SVG hit-region group has an
+interaction label and hit targets use the destination scene's `navLabel`. When
+the dialog opens, its sibling elements inside `#world` become inert; closing it
+restores them before returning focus. The `.split` removal was isolated from
+`web/style.css` for parity review.
+
+Two related refactors are deliberately deferred:
+- Unifying the palette across `src/motion/*.mjs` would break the byte-identical
+  parity proof against `web/` and requires a visual re-verification pass.
+- Deriving hit-region geometry from content data risks wrong coordinates: those
+  values are tied to the artwork's scale, and misplaced invisible click targets
+  have no visual symptom.
+
+The orphan `public/assets/estudio-6.png` and unused logo SVGs are kept on purpose:
+they are the collective's brand material, not dead code.
+
+L11 (design): the owner's brief for T8, quoting their own words: the artwork
+does not fill the screen, and the type is too small. This ends the parity phase
+deliberately — from here the criterion is "better, with the same identity".
+
+The project's design system is now recorded in `design/system.md`, synced from
+`src/styles/style.css` and `src/lib/tokens.ts`, with `design/system.html` as the
+specimen board. Three directions live in `design/midi-escena-fluida/`:
+`01-cover-bleed.html`, `02-fluid-composition.html`, `03-editorial-split.html`.
+They differ in structure, not colour. None is implemented yet; the unchosen
+two stay as alternatives.
