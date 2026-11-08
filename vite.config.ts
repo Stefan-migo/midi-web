@@ -93,5 +93,13 @@ export default defineConfig(({ mode }) => {
         input: ['index.html'],
       },
     },
+    server: {
+      watch: {
+        // These hold brand material and design sources, not app code. Watching
+        // them crashed the dev server: the identity PDF is open in a viewer and
+        // Windows answers EBUSY on the watch handle.
+        ignored: ['**/Docs/**', '**/MIDI/**', '**/design/**'],
+      },
+    },
   };
 });
