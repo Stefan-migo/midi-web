@@ -395,3 +395,36 @@ if (site.hint) whisperNode.textContent = site.hint;
 adoptLegacyHash();
 syncMotionButton();
 setScene(false);
+
+/**
+ * TEMPORARY DIAGNOSTIC (midi:debug). Open any route with `?debug=1` to see the
+ * navigation state on screen and any uncaught error. Remove once the reported
+ * lock is understood.
+ */
+if (new URLSearchParams(location.search).has('debug')) {
+  const panel = document.createElement('pre');
+  panel.style.cssText =
+    'position:fixed;left:0;right:0;bottom:0;z-index:99;margin:0;padding:8px 10px;' +
+    'background:#f4f4f4;color:#111;font:11px/1.5 ui-monospace,monospace;' +
+    'white-space:pre-wrap;max-height:48vh;overflow:auto';
+  document.body.append(panel);
+  const write = (tag: string, detail: string): void => {
+    panel.textContent = `[${tag}] ${detail}
+${panel.textContent ?? ''}`.slice(0, 3000);
+  };
+  addEventListener('error', (event) => {
+    write('error', `${event.message} @ ${event.filename}:${event.lineno}:${event.colno}`);
+  });
+  addEventListener('unhandledrejection', (event) => {
+    write('rejection', String(event.reason));
+  });
+  setInterval(() => {
+    write(
+      'state',
+      `position=${position.toFixed(3)} target=${targetPosition} scene=${sceneIndex} ` +
+        `revealHidden=${reveal.hidden} inFlight=${cancelTransition ? 'yes' : 'no'} ` +
+        `painted=${transitionPaintedAt > 0 ? Math.round(performance.now() - transitionPaintedAt) + 'ms ago' : 'idle'} ` +
+        `path=${location.pathname}`,
+    );
+  }, 700);
+}
