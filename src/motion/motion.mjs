@@ -55,5 +55,5 @@ export function stretchLogos(t) {
 }
 
 export function draw(value) {
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 900" preserveAspectRatio="xMidYMid meet" overflow="hidden" style="display:block;width:100%;height:100%;background:${ink}" aria-hidden="true">${stretchLogos(clamp(value))}</svg>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 900" preserveAspectRatio="xMidYMid slice" overflow="hidden" style="display:block;width:100%;height:100%;background:${ink}" aria-hidden="true">${stretchLogos(clamp(value))}</svg>`;
 }

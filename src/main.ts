@@ -47,7 +47,12 @@ let position = 0;
 let targetPosition = 0;
 let selected = 0;
 let paused = reduced.matches;
-let stopPlayback: (() => void) | undefined;
+/** Cancels the transition in flight, if any. */
+let cancelTransition: (() => void) | undefined;
+/** Last moment the transition painted. `0` means nothing is in flight. */
+let transitionPaintedAt = 0;
+/** A transition that paints nothing for this long is treated as dead. */
+const TRANSITION_STALL_MS = 1500;
 let returnFocus: HTMLElement | undefined;
 
 function currentScene(): Scene {
@@ -90,12 +95,8 @@ function mountPieces(): void {
     piece.setAttribute('class', 'piece');
     piece.setAttribute('role', 'button');
     piece.setAttribute('tabindex', '0');
-    piece.setAttribute(
-      'aria-label',
-      sceneIndex === 0
-        ? `Desplegar universo MIDI, fragmento ${index + 1}`
-        : `Abrir ${routes[sceneIndex]?.scene.navLabel ?? ''}, fragmento ${index + 1}`,
-    );
+    const targetLabel = sceneIndex === 0 ? routes[1]?.scene.navLabel : routes[sceneIndex]?.scene.navLabel;
+    piece.setAttribute('aria-label', `Abrir ${targetLabel ?? 'contenido'}, fragmento ${index + 1}`);
     const attributes = { x, y, width: right - x, height: bottom - y };
     for (const [key, value] of Object.entries(attributes)) {
       piece.setAttribute(key, String(value));
@@ -123,7 +124,7 @@ function setScene(animate = true): void {
   targetPosition = routeIndex(location.pathname, routes, base);
   sceneIndex = targetPosition;
   closeContent();
-  stopPlayback?.();
+  cancelTransition?.();
   world.dataset['scene'] = String(sceneIndex);
   const data = currentScene();
   titleNode.textContent = data.title;
@@ -138,14 +139,12 @@ function setScene(animate = true): void {
   if (!shouldAnimate) {
     showFrame(targetPosition);
     mountPieces();
-    stopPlayback = undefined;
+    cancelTransition = undefined;
+    transitionPaintedAt = 0;
     return;
   }
   pieces.replaceChildren();
-  stopPlayback = playBetween(position, targetPosition, showFrame, () => {
-    stopPlayback = undefined;
-    mountPieces();
-  });
+  startTransition();
 }
 
 function showFrame(next: number): void {
@@ -180,6 +179,9 @@ function openContent(index: number): void {
   } else {
     revealBody.innerHTML = `<h2 id="reveal-title">${data.title}</h2>`;
   }
+  for (const sibling of [...world.children]) {
+    if (sibling !== reveal) (sibling as HTMLElement).inert = true;
+  }
   reveal.hidden = false;
   reveal.setAttribute('role', 'dialog');
   reveal.setAttribute('aria-modal', 'true');
@@ -206,13 +208,62 @@ function changeArt(step: number): void {
 function closeContent(): void {
   const wasOpen = !reveal.hidden;
   reveal.hidden = true;
+  if (wasOpen) {
+    for (const sibling of [...world.children]) {
+      if (sibling !== reveal) (sibling as HTMLElement).inert = false;
+    }
+  }
   if (wasOpen && returnFocus) returnFocus.focus();
 }
 
 closeButton.onclick = closeContent;
 
+/**
+ * Runs the transition to `targetPosition`. One place owns the in-flight state,
+ * completion is idempotent, and a transition that stops painting is treated as
+ * dead instead of blocking navigation forever.
+ */
+function startTransition(): void {
+  cancelTransition?.();
+  cancelTransition = undefined;
+  let settled = false;
+  transitionPaintedAt = performance.now();
+  const settle = (): void => {
+    if (settled) return;
+    settled = true;
+    cancelTransition = undefined;
+    transitionPaintedAt = 0;
+    mountPieces();
+  };
+  const handle = playBetween(
+    position,
+    targetPosition,
+    (next: number) => {
+      if (settled) return;
+      transitionPaintedAt = performance.now();
+      showFrame(next);
+    },
+    settle,
+  );
+  // A transition that settles synchronously must not leave a handle behind.
+  cancelTransition = settled ? undefined : handle;
+}
+
+/** Recovery for a transition that stopped painting: navigation must not die. */
+function clearStalledTransition(): void {
+  if (transitionPaintedAt === 0) return;
+  if (performance.now() - transitionPaintedAt < TRANSITION_STALL_MS) return;
+  cancelTransition?.();
+  cancelTransition = undefined;
+  transitionPaintedAt = 0;
+  position = targetPosition;
+  showFrame(position);
+  mountPieces();
+}
+
 function advance(direction: number): void {
-  if (stopPlayback || !reveal.hidden) return;
+  if (!reveal.hidden) return;
+  clearStalledTransition();
   const next = targetPosition + direction;
   if (next < 0 || next >= routes.length) {
     const wrapped = routes[(next + routes.length) % routes.length];
@@ -233,7 +284,7 @@ function syncMotionButton(): void {
 motionButton.onclick = () => {
   paused = !paused;
   syncMotionButton();
-  if (paused && stopPlayback) setScene(false);
+  if (paused) setScene(false);
 };
 
 world.addEventListener('pointermove', (event) => {
@@ -330,14 +381,14 @@ document.addEventListener('keydown', (event) => {
 reduced.addEventListener('change', () => {
   paused = reduced.matches;
   syncMotionButton();
-  if (paused && stopPlayback) setScene(false);
+  if (paused) setScene(false);
 });
 
 addEventListener('popstate', () => setScene());
 addEventListener('resize', () => placeLabels(sceneIndex));
 
 document.fonts.ready.then(() => {
-  if (!stopPlayback) placeLabels(sceneIndex);
+  if (!cancelTransition) placeLabels(sceneIndex);
 });
 
 if (site.hint) whisperNode.textContent = site.hint;

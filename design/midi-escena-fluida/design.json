@@ -1,0 +1,28 @@
+{
+  "title": "Escena fluida: llenar la pantalla y dar jerarquía",
+  "brief": "El sitio no llena la pantalla (lienzo fijo 1200x900 con letterbox) y la tipografía está subdimensionada (título de escena entre 12 y 15 px, cuerpo en 10 px). Tres direcciones que resuelven ambas cosas sin perder la identidad monoespaciada, tinta sobre papel invertido, sin radios, con el HUD como firma.",
+  "feature": "odd/tasks/midi-site-platform.md",
+  "artboards": [
+    {
+      "file": "01-cover-bleed.html",
+      "title": "Cover bleed",
+      "tradeoff": "Llena la pantalla con un cambio de un atributo: preserveAspectRatio slice en lugar de meet. El costo es el recorte: en una pantalla vertical se pierde hasta un 40% del ancho de la composición, y hay piezas que quedan fuera de cuadro.",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "file": "02-fluid-composition.html",
+      "title": "Composición fluida",
+      "tradeoff": "Nada se recorta y no hay bandas: la composición se arma para la proporción real de la pantalla. Es la dirección más honesta y la más cara: obliga a reescribir la matemática del motion, que hoy asume un lienzo de 1200x900, y a re-derivar las zonas de click que dependen de esa escala.",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "file": "03-editorial-split.html",
+      "title": "Split editorial",
+      "tradeoff": "Resuelve las dos quejas de una vez: la obra sangra en un campo propio y la tipografía gana una columna real, con un cuerpo legible de 15 px. El costo es conceptual: deja de ser 'la obra es la página entera' y pasa a ser una página con obra.",
+      "width": 1440,
+      "height": 900
+    }
+  ]
+}

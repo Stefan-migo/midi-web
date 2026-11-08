@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MIDI — sistema de diseño</title>
+<style>
+  :root{
+    --paper:#f4f4f4; --ink:#111111; --border:#777; --focus:#888;
+    --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--ink);color:var(--paper);font-family:var(--mono);padding:48px;width:1440px}
+  h1{font-size:34px;font-weight:500;letter-spacing:-.03em;margin:0 0 6px}
+  .sub{font-size:12px;letter-spacing:.16em;text-transform:uppercase;opacity:.6;margin:0 0 40px}
+  h2{font-size:11px;letter-spacing:.22em;text-transform:uppercase;opacity:.55;font-weight:400;
+     margin:0 0 16px;padding-bottom:8px;border-bottom:1px solid rgba(244,244,244,.22)}
+  section{margin-bottom:40px}
+  .row{display:flex;gap:24px;flex-wrap:wrap}
+  .swatch{width:150px}
+  .chip{height:92px;border:1px solid rgba(244,244,244,.25)}
+  .swatch dt{font-size:12px;margin:8px 0 0}
+  .swatch dd{margin:0;font-size:10px;opacity:.6}
+  table{border-collapse:collapse;width:100%;font-size:12px}
+  th,td{text-align:left;padding:8px 12px 8px 0;border-bottom:1px solid rgba(244,244,244,.12);vertical-align:baseline}
+  th{font-weight:400;font-size:10px;letter-spacing:.16em;text-transform:uppercase;opacity:.55}
+  .spec{opacity:.55}
+  .type-display{font-family:var(--mono);font-weight:500;font-size:72px;line-height:.9;letter-spacing:-.045em;margin:0}
+  .type-kicker{font-size:13px;letter-spacing:.16em;text-transform:uppercase;margin:6px 0 0}
+  .type-body{font-size:15px;line-height:1.7;max-width:48ch;margin:18px 0 0}
+  .type-hud{font-size:11px;letter-spacing:.06em}
+  .components{display:flex;align-items:center;gap:32px;flex-wrap:wrap}
+  .signature{font-size:16px;letter-spacing:-.02em}
+  .map{display:flex;gap:12px}
+  .map i{width:12px;height:12px;border:1px solid;display:block}
+  .map i[aria-current]{background:var(--paper);transform:rotate(90deg)}
+  .counter{font-size:10px}
+  .counter span{font-size:22px;margin-left:18px}
+  .motion{width:27px;height:27px;border:1px solid var(--border);display:grid;place-items:center;font-size:10px}
+  .panel{background:var(--paper);color:var(--ink);border:10px solid var(--ink);outline:2px solid var(--paper);
+         padding:26px;width:520px}
+  .panel h3{font-size:34px;letter-spacing:-.05em;font-weight:400;margin:0 0 12px}
+  .panel p{font-size:13px;line-height:1.8;margin:0;max-width:48ch}
+  .focus{outline:2px dashed currentColor;outline-offset:6px;padding:4px 8px}
+  .note{font-size:11px;opacity:.5;margin:10px 0 0}
+  @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+  <h1>MIDI — sistema de diseño</h1>
+  <p class="sub">Sincronizado desde src/styles/style.css y src/lib/tokens.ts</p>
+
+  <section>
+    <h2>Color</h2>
+    <div class="row">
+      <dl class="swatch"><div class="chip" style="background:#f4f4f4"></div><dt>--paper</dt><dd>#f4f4f4</dd></dl>
+      <dl class="swatch"><div class="chip" style="background:#111111"></div><dt>--ink</dt><dd>#111111</dd></dl>
+      <dl class="swatch"><div class="chip" style="background:#777"></div><dt>borde</dt><dd>#777</dd></dl>
+      <dl class="swatch"><div class="chip" style="background:#888"></div><dt>foco de piezas</dt><dd>#888</dd></dl>
+    </div>
+    <p class="note">Contraste papel/tinta 17.9:1 — pasa AA y AAA en ambos sentidos.</p>
+  </section>
+
+  <section>
+    <h2>Tipografía</h2>
+    <p class="type-display">Archivo de formas</p>
+    <p class="type-kicker">materia en movimiento</p>
+    <p class="type-body">Escala propuesta para el brief: el título de escena sube de 12–15 px a un tamaño de display real, y el cuerpo de 10 px a 15 px. La identidad monoespaciada no cambia.</p>
+    <table style="margin-top:24px">
+      <tr><th>Rol</th><th>Actual</th><th>Propuesto</th></tr>
+      <tr><td>Título de escena</td><td class="spec">clamp(12px, 1vw, 15px)</td><td>clamp(48px, 10vw, 160px) / 0.9 / -.045em</td></tr>
+      <tr><td>Subtítulo</td><td class="spec">10px</td><td>clamp(12px, 1.1vw, 15px) / .16em / uppercase</td></tr>
+      <tr><td>Cuerpo</td><td class="spec">10px</td><td>15px / 1.7</td></tr>
+      <tr><td>HUD</td><td class="spec">9px</td><td>11px</td></tr>
+      <tr><td>Panel: título</td><td class="spec">clamp(24px, 4vw, 55px)</td><td>sin cambios</td></tr>
+    </table>
+  </section>
+
+  <section>
+    <h2>Componentes</h2>
+    <div class="components">
+      <span class="signature">MIDI</span>
+      <span class="type-hud">423 : 118</span>
+      <span class="map" role="img" aria-label="Navegación de escenas, la primera activa"><i aria-current="page"></i><i></i><i></i><i></i><i></i></span>
+      <span class="type-hud">tocá una forma</span>
+      <span class="counter">00 / 04 <span>↗</span></span>
+      <span class="motion">Ⅱ</span>
+    </div>
+    <p class="note">HUD: firma, coordenadas, cinco cuadrados de 12 px, hint, contador, botón de movimiento de 27 px.</p>
+    <div style="margin-top:32px"><div class="panel"><h3>Abrir un diálogo.</h3><p>Panel del sistema: papel sobre tinta, borde de 10 px, sin radio. El título usa Roboto Mono y el cuerpo 13 px con máximo 48ch.</p></div></div>
+    <p class="note" style="margin-top:28px">Foco visible: <span class="focus">outline 2px dashed</span> con offset 6 px. Sin radios en ningún componente.</p>
+  </section>
+
+  <section>
+    <h2>Layout</h2>
+    <table>
+      <tr><th>Regla</th><th>Valor</th></tr>
+      <tr><td>Lienzo de composición</td><td>fijo 1200×900, preserveAspectRatio meet → letterbox</td></tr>
+      <tr><td>Alto del mundo</td><td>100svh, mínimo 450px</td></tr>
+      <tr><td>Breakpoint</td><td>650px</td></tr>
+      <tr><td>Panel</td><td>inset 15% 18%</td></tr>
+    </table>
+    <p class="note">El letterbox es la causa del primer punto del brief: la obra no llena la pantalla en proporciones distintas de 4:3.</p>
+  </section>
+</body>
+</html>

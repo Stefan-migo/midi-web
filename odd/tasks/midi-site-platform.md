@@ -26,6 +26,30 @@ directorio."
 S6. Remote, done: "a partir de este directorio crearemos el github proyect
 remoto."
 
+S7. The navigation lock, in the user's words: "Hay un error en la primera
+transicion, desde la pagina inicio a la pagina portafolio. Cuando se activa la
+transicion a traves del click del logo en el inicio o del scroll, avanza
+solamente el logo del header, en este caso, junto con el texto, pero no se
+realiza la transicion, la transicion principal, y se queda bloqueado. Ya no se
+puede ir ni volver. La unica forma es hacerlo a traves de los botones de los
+cuadrados de la navegacion abajo."
+
+S8. The transitions do not cover the viewport, in the user's words: "los cambios
+transicionales donde se cambia de color el fondo, el background, se cambia el
+background solamente en este cuadrado donde se configuro la transicion, pero el
+resto del width quedan dos franjas laterales... Hay que considerar la transicion
+para el full width y tambien el alto. En la version mobile... las franjas que en
+la version escritorio se ven en los laterales... se ven para arriba y para abajo,
+para superior e inferior."
+
+S9. New hidden feature, in the user's words: "quiero crear el path /midi-links y
+/midi-links/add... para recrear una especie de Linktree, pero propio de MIDI...
+Este Linktree y este path solo se va a poder acceder escribiendo directamente la
+URL. No va a tener acceso dentro de la pagina y va a estar disenado solamente
+para mobile version, solo para celular, modo celular. Y el link, el siguiente
+path, el MIDI Link Add, es para poder agregar links sin necesidad de crear un
+CMS."
+
 ## Architecture decision (recorded, not open)
 
 Vite. Static multi-page prerendered HTML, one real URL per section, vanilla
@@ -105,7 +129,9 @@ cleanup task once the visual sign-off lands.
 | T5 | S2 | SEO: per-route title/description, canonical, OG/Twitter, sitemap, robots | writer | this commit |
 | T6 | S2 | AEO: JSON-LD (Organization, CollectionPage, BreadcrumbList), semantic headings, `llms.txt` | writer | this commit |
 | T7 | S1, S3 | Defect pass: `00 / 03` vs `04` counter, dead `.split` CSS, orphan assets, hit regions derived from data, a11y (`aria-labelledby`, `inert`, real hit labels) | writer | — |
-| T8 | S1, S3 | Design polish pass after parity is verified; needs a design brief (gentle-design) | parent | — |
+| T8 | S1, S3 | Design polish pass after parity is verified; needs a design brief (gentle-design) | parent | `86e14d0` |
+| T9 | S8 | Every generated svg wrapper must declare the same `preserveAspectRatio`; the four transition wrappers currently fall back to the letterboxing default | writer | this commit |
+| T10 | S7 | Navigation must not be gated on an animation flag that can stay set: reproduce the 0-to-1 lock headlessly, then fix the state machine | writer | this commit |
 
 ## Log
 
@@ -208,5 +234,99 @@ with `lines.join('\\n')`, a literal backslash-n, so the whole file was one line;
 and its summary concatenated every scene's body into a run-on paragraph. Now it
 uses only the collective's own paragraphs, capped on a word boundary.
 
-Known, not blocking: gallery routes prerender only the first image. Listing all
-four would be better for AEO and is a one-line change when it matters.
+Known, not blocking: gallery routes prerender all four images and their distinct
+alt text inside the hidden reveal body so crawlers and assistive technology can
+access the complete gallery. Runtime opening still replaces that body.
+
+L11 (T7 safe subset): gallery items now have distinct, factual Spanish alt text;
+route documents prerender every gallery image. Removed only the three `.split`
+selectors after searching markup and JS; no `.split` class reference exists.
+`#whisper` is a plain hint, not a live region. The SVG hit-region group has an
+interaction label and hit targets use the destination scene's `navLabel`. When
+the dialog opens, its sibling elements inside `#world` become inert; closing it
+restores them before returning focus. The `.split` removal was isolated from
+`web/style.css` for parity review.
+
+Two related refactors are deliberately deferred:
+- Unifying the palette across `src/motion/*.mjs` would break the byte-identical
+  parity proof against `web/` and requires a visual re-verification pass.
+- Deriving hit-region geometry from content data risks wrong coordinates: those
+  values are tied to the artwork's scale, and misplaced invisible click targets
+  have no visual symptom.
+
+The orphan `public/assets/estudio-6.png` and unused logo SVGs are kept on purpose:
+they are the collective's brand material, not dead code.
+
+L11 (design): the owner's brief for T8, quoting their own words: the artwork
+does not fill the screen, and the type is too small. This ends the parity phase
+deliberately — from here the criterion is "better, with the same identity".
+
+The project's design system is now recorded in `design/system.md`, synced from
+`src/styles/style.css` and `src/lib/tokens.ts`, with `design/system.html` as the
+specimen board. Three directions live in `design/midi-escena-fluida/`:
+`01-cover-bleed.html`, `02-fluid-composition.html`, `03-editorial-split.html`.
+They differ in structure, not colour. None is implemented yet; the unchosen
+two stay as alternatives.
+
+L12 (T8, identity alignment): the identity deck settles the direction question
+it was asked to settle. The deck decomposes the isotipo into rectangles and
+recomposes it at other scales, and those compositions bleed past the frame, so
+boxing the artwork in a 1200x900 canvas with letterbox was an identity
+violation rather than a taste question. Direction 03 (editorial split) is
+contradicted by the deck, which has no text columns: it has labels and
+compositions. The chosen change is therefore the bleed, not a redesign.
+
+Consequences recorded, not hidden:
+- The artwork wrapper and `#hit-regions` both use `xMidYMid slice`. They must
+  move together or the invisible click targets stop matching the drawing, so
+  `check-routes` now reads the value out of `src/motion/motion.mjs` and fails if
+  the two drift apart. That check is what makes this safe to change later.
+- Under the bleed, pieces cropped outside the frame are no longer clickable. On
+  a very tall or very wide viewport a scene could lose every clickable shape.
+  Navigation still exists through the HUD, the wheel and the advance button, but
+  the "tocá una forma" affordance can go dead on that scene. This needs a human
+  look at several aspect ratios; it cannot be proven without a browser.
+- The type change follows the deck's own large register (the deck's contact
+  line spans the page), not an invented display headline: scene title
+  `clamp(32px, 5.5vw, 96px)`, subtitle `clamp(13px, 1.2vw, 17px)`, HUD 11-12px.
+
+L13 (incident, mine, corrected): a `git add -A` while the T8 worker was running
+swept its in-progress edits into the brand-material commit, producing a commit
+whose message described none of its code. The branch was unpushed, so the
+commit was rewritten as two: the brand material and T8 separately. Recorded
+because the same mistake is available on every commit made while a worker runs:
+stage paths explicitly, never `-A`.
+
+L14 (review budget): the first native review attempt stopped with
+`lens_context_budget_exceeded` and created no authority. Cause was mine: the
+brand commit had versioned 71 paths, nearly all binary mirrors of twelve marks.
+The repository now versions the deck, the usage guide and the twelve vector
+sources, and ignores the print, PNG, WebP and favicon mirrors, which stay on
+disk. A candidate has to be readable by a reviewer to be reviewable.
+
+L15 (T9/T10, the two production bugs): S8 was my regression. T8 gave
+`motion.mjs` `preserveAspectRatio="xMidYMid slice"` and left the four
+`transition.mjs` wrappers without the attribute, so they fell back to
+`xMidYMid meet` and letterboxed: the resting scene covered, the transitions did
+not. All four now declare `slice`. The alternative — stretching the canvases to
+fill — is forbidden by the logo guide, which requires the mark's proportions to
+be preserved, so the answer is cover-and-crop.
+
+S7 was a state-machine defect, not a drawing defect. `advance()` began with
+`if (stopPlayback || !reveal.hidden) return;`, so a playback flag that stayed set
+killed the wheel and the artwork click forever while the HUD squares kept
+working, because those enter through `navigate()` and never touch the guard. The
+fix removes the failure class rather than the symptom: navigation is no longer
+gated on the animation at all, `startTransition()` is the single owner of the
+in-flight handle, completion is idempotent and cannot be overwritten by a
+synchronous settle, and `clearStalledTransition()` recovers a transition that
+paints nothing for 1500 ms.
+
+The delegated worker returned this unit half-done: two of four wrappers and no
+T10. Finished by hand. Evidence: `tsc --noEmit` exit 0 and
+`scripts/check-motion.mjs` asserting 12 renders and 8 directed transitions; that
+script fails on the old code at position 1.5, which is the RED proof.
+
+Still needs a browser: the lock was reported, never reproduced headlessly, so
+the human check on the live site at 1440x900, 390x844 and 1920x1080 is what
+confirms it.

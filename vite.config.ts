@@ -90,7 +90,15 @@ export default defineConfig(({ mode }) => {
     plugins: [prerenderRoutes(base, siteUrl), devRoutes()],
     build: {
       rollupOptions: {
-        input: ['index.html'],
+        input: ['index.html', 'midi-links/index.html', 'midi-links/add/index.html'],
+      },
+    },
+    server: {
+      watch: {
+        // These hold brand material and design sources, not app code. Watching
+        // them crashed the dev server: the identity PDF is open in a viewer and
+        // Windows answers EBUSY on the watch handle.
+        ignored: ['**/Docs/**', '**/MIDI/**', '**/design/**'],
       },
     },
   };
