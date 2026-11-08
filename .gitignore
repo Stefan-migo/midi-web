@@ -8,3 +8,6 @@ Thumbs.db
 
 # Copia de referencia del sitio original (no es parte del proyecto)
 MIDI/
+
+# Build
+dist/

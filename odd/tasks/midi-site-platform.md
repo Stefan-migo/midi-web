@@ -64,6 +64,13 @@ interface Scene {
   };
   gallery?: { src: string; alt: string; title?: string; year?: string }[];
 }
+
+interface Site {
+  name: string;
+  tagline?: string;       // no sourced value yet; never invent one
+  hint?: string;          // the `#whisper` HUD text, `web/index.html:12`
+  scenes: Scene[];
+}
 ```
 
 Rules:
