@@ -2,9 +2,10 @@
  * The ten pieces of the archive, keyed by the names the motion engine already
  * uses (`src/motion/transition.mjs`).
  *
- * TODO(T-portafolio): every title and subtitle here is a placeholder. Real obra
- * names, years and credits have to come from the owner; inventing them would
- * publish false statements about a real collective.
+ * TODO(T-portafolio): the remaining nine pieces still need real titles. The
+ * MIDI4all entry comes from the presentation sheet the owner supplied:
+ * "MIDI4all", proyecto artístico audiovisual del colectivo MIDILab, presentado
+ * en 990 Arte Club, Córdoba, Argentina.
  *
  * To add a real card, drop the image in `public/assets/portafolio/` and fill in
  * `title`, `subtitle` and `image` for that piece. Nothing else needs to change.
@@ -28,9 +29,12 @@ export interface ArchivePiece {
 export const archivePieces: ArchivePiece[] = [
   {
     id: 'solid-cap',
-    label: 'TODO: obra de solid-cap',
-    title: 'TODO: título',
-    subtitle: 'TODO: subtítulo',
+    label: 'MIDI4all',
+    title: 'MIDI4all',
+    subtitle: '990 Arte Club · Córdoba',
+    image: 'assets/portafolio/midi4all/_DSC5779-web.jpg',
+    imageAlt:
+      'Presentación de MIDI4all en 990 Arte Club: dos personas frente a laptops y controladores sobre el escenario, con luz azul y una proyección del isotipo MIDI.',
   },
   {
     id: 'solid-left',

@@ -150,9 +150,12 @@ function mountPieces(): void {
     back.className = 'face face--back';
     if (data?.image) {
       const image = document.createElement('img');
-      image.src = data.image;
+      // The source is attached on first hover: a lazy image inside a hidden,
+      // rotated face is never considered visible, so it would never load.
+      // Root-relative and base-aware, because Vite cannot rewrite a runtime path.
+      image.dataset['src'] = withBase(`/${data.image}`, base);
       image.alt = data.imageAlt ?? '';
-      image.loading = 'lazy';
+      image.decoding = 'async';
       back.append(image);
     }
     const scrim = document.createElement('span');
@@ -180,6 +183,12 @@ function mountPieces(): void {
     };
     const showLabel = (): void => {
       whisperNode.textContent = pieceLabel(name);
+      const image = card.querySelector('img');
+      const source = image?.dataset['src'];
+      if (image && source) {
+        image.src = source;
+        delete image.dataset['src'];
+      }
       card.classList.add('is-flipped');
     };
     const clearLabel = (): void => {
@@ -217,10 +226,16 @@ function layoutCards(): void {
     const rect = hit.getBoundingClientRect();
     const width = Math.max(rect.width, 132);
     const height = Math.max(rect.height, 104);
+    const left = rect.left - origin.left + (rect.width - width) / 2;
+    const top = rect.top - origin.top + (rect.height - height) / 2;
     card.style.width = `${width}px`;
     card.style.height = `${height}px`;
-    card.style.left = `${rect.left - origin.left + (rect.width - width) / 2}px`;
-    card.style.top = `${rect.top - origin.top + (rect.height - height) / 2}px`;
+    card.style.left = `${left}px`;
+    card.style.top = `${top}px`;
+    // Wide pieces turn around the horizontal axis, tall ones around the vertical.
+    card.classList.toggle('is-horizontal', rect.width > rect.height);
+    // Against the bottom edge the text would be clipped, so it moves to the top.
+    card.classList.toggle('is-text-top', top + height > origin.height - 6);
   }
 }
 
