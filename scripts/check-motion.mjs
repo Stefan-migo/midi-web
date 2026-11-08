@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
-import { renderPosition, playBetween, transitionDurationMs } from '../src/motion/site-motion.mjs';
+import { renderPosition, playBetween, transitionDurationMs, regions } from '../src/motion/site-motion.mjs';
+import { pieces } from '../src/motion/transition.mjs';
 
 const positions = [0, 0.3, 0.5, 0.78, 0.79, 1, 1.5, 2, 2.5, 3, 3.5, 4];
 for (const position of positions) {
@@ -111,6 +112,20 @@ assert.ok(
 // The signature and the scene copy read their transition duration from this same
 // number. If the two drift apart, the labels arrive before the artwork, which is
 // exactly what the owner saw.
+// The archive components in `src/main.ts` read their names from the motion
+// engine's piece table and their boxes from `regions[1]`, in order. Those two
+// lists must not drift apart, or a component would carry another piece's name.
+assert.equal(
+  regions[1].length,
+  pieces.length,
+  `portafolio has ${regions[1].length} hit regions but ${pieces.length} named pieces`,
+);
+assert.equal(
+  new Set(pieces.map((piece) => piece.name)).size,
+  pieces.length,
+  'piece names must be unique',
+);
+
 const frameMs = 1000 / 30;
 const tolerance = 3 * frameMs;
 for (const [from, to, scale] of [

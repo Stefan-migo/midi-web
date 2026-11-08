@@ -16,7 +16,7 @@ M833 972.5H1000.5V1090H833Z M852.5 992H981V1090H852.5Z"/>`;
 
 // Each row maps an independently clipped piece from Scene 1 to the reference artwork.
 // Bounds are [left, top, right, bottom]; arcs add a small offset during travel.
-const pieces = [
+export const pieces = [
   {name: 'solid-cap', from: [127, 115, 372, 209.825], to: [116, 593, 577, 786], delay: 9, arc: -65},
   {name: 'solid-left', from: [127, 209.825, 222, 420], to: [76, 166, 272, 594.5], delay: 2, arc: -40},
   {name: 'solid-right', from: [258, 209.825, 373, 420], to: [346, 166, 538, 594.5], delay: 5, arc: 50},

@@ -8,6 +8,8 @@ import {
   withBase,
   type RouteSpec,
 } from './lib/routes';
+import { pieceLabel } from './content/portfolio';
+import { pieces as pieceTable } from './motion/transition.mjs';
 import { placeLabels } from './motion/label-layout.mjs';
 import { playBetween, regions, renderPosition, transitionDurationMs } from './motion/site-motion.mjs';
 
@@ -104,16 +106,36 @@ function mountPieces(): void {
   pieces.replaceChildren();
   const boxes = (regions[targetPosition] ?? []) as Box[];
   boxes.forEach(([x, y, right, bottom], index) => {
+    // The name comes from the motion engine's own piece table, so the component
+    // and the artwork share one key instead of two parallel lists.
+    const name = pieceTable[index]?.name ?? `piece-${index}`;
+    const group = document.createElementNS(pieces.namespaceURI, 'g') as SVGGElement;
+    group.setAttribute('class', 'piece-group');
+    group.setAttribute('data-piece', name);
+
+    // Visual layer: invisible at rest, so the resting artwork is never touched.
+    const geometry = document.createElementNS(pieces.namespaceURI, 'rect') as SVGRectElement;
+    geometry.setAttribute('class', 'geometry');
+    geometry.setAttribute('pointer-events', 'none');
+
     const piece = document.createElementNS(pieces.namespaceURI, 'rect') as SVGRectElement;
-    piece.setAttribute('class', 'piece');
+    piece.setAttribute('class', 'hit');
     piece.setAttribute('role', 'button');
     piece.setAttribute('tabindex', '0');
     const targetLabel = sceneIndex === 0 ? routes[1]?.scene.navLabel : routes[sceneIndex]?.scene.navLabel;
-    piece.setAttribute('aria-label', `Abrir ${targetLabel ?? 'contenido'}, fragmento ${index + 1}`);
+    piece.setAttribute(
+      'aria-label',
+      sceneIndex === 0
+        ? `Abrir ${targetLabel ?? 'contenido'}, fragmento ${index + 1}`
+        : `${pieceLabel(name)}. Abrir la obra`,
+    );
+
     const attributes = { x, y, width: right - x, height: bottom - y };
     for (const [key, value] of Object.entries(attributes)) {
       piece.setAttribute(key, String(value));
+      geometry.setAttribute(key, String(value));
     }
+
     const activate = (): void => {
       const target = routeAt(sceneIndex === 0 ? 1 : sceneIndex);
       if (sceneIndex === 0) {
@@ -122,6 +144,16 @@ function mountPieces(): void {
         openContent(index);
       }
     };
+    const showLabel = (): void => {
+      whisperNode.textContent = pieceLabel(name);
+    };
+    const clearLabel = (): void => {
+      whisperNode.textContent = site.hint ?? '';
+    };
+    piece.addEventListener('pointerenter', showLabel);
+    piece.addEventListener('pointerleave', clearLabel);
+    piece.addEventListener('focus', showLabel);
+    piece.addEventListener('blur', clearLabel);
     piece.addEventListener('click', activate);
     piece.addEventListener('keydown', (event) => {
       if (event.key === 'Enter' || event.key === ' ') {
@@ -129,7 +161,8 @@ function mountPieces(): void {
         activate();
       }
     });
-    pieces.append(piece);
+    group.append(geometry, piece);
+    pieces.append(group);
   });
 }
 

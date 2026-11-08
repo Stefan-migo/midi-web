@@ -11,8 +11,14 @@
 #composition { overflow: hidden; touch-action: pan-x pinch-zoom; }
 #motion-art, #hit-regions { position: absolute; inset: 0; width: 100%; height: 100%; }
 #motion-art { pointer-events: none; }
-#hit-regions .piece { fill: transparent; stroke: none; pointer-events: all; }
-#hit-regions .piece:focus-visible { stroke: #888; stroke-width: 2; stroke-dasharray: 6 4; vector-effect: non-scaling-stroke; }
+#hit-regions .hit { fill: transparent; stroke: none; pointer-events: all; cursor: crosshair; }
+#hit-regions .hit:focus-visible { stroke: #888; stroke-width: 2; stroke-dasharray: 6 4; vector-effect: non-scaling-stroke; }
+#hit-regions .geometry { fill: var(--paper); fill-opacity: 0; stroke: var(--paper); stroke-width: 0; vector-effect: non-scaling-stroke; pointer-events: none; transition: fill-opacity .3s, stroke-width .3s; }
+#hit-regions .piece-group:hover .geometry,
+#hit-regions .piece-group:focus-within .geometry { fill-opacity: .23; stroke-width: 12; }
+[data-scene="0"] #hit-regions .piece-group:hover .geometry,
+[data-scene="0"] #hit-regions .piece-group:focus-within .geometry { stroke-width: 0; fill-opacity: 1; }
+@media (prefers-reduced-motion: reduce) { #hit-regions .geometry { transition: none; } }
 
 .signature { width: 160px; height: auto; line-height: 0; letter-spacing: normal; }
 .signature img { display: block; width: 100%; height: auto; }
