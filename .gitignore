@@ -22,3 +22,8 @@ Docs/MIDI - Pack de logos/Web/PNG/
 Docs/MIDI - Pack de logos/Web/WebP/
 Docs/MIDI - Pack de logos/Web/Favicon/
 Docs/MIDI - Pack de logos/Vista previa.jpg
+# El manual de identidad se entrega como documento, no se versiona: 416 KB
+# binarios que ningun revisor puede leer, y enturbian cualquier candidato de
+# revision. Vive en disco y en la historia (commit 86e14d0). design/system.md
+# lo cita como autoridad.
+Docs/Identidad MIDI.pdf
