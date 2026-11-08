@@ -24,8 +24,8 @@
   <section><p>transición 4</p><button class="stage" id="scene-four" aria-label="Reproducir transición 4"></button></section>
 </main>
 <script type="module">
-  import {draw, smooth} from './motion.mjs';
-  import {drawTransition, drawTransitionThree, drawTransitionFour} from './transition.mjs';
+  import {draw, smooth} from '../../src/motion/motion.mjs';
+  import {drawTransition, drawTransitionThree, drawTransitionFour} from '../../src/motion/transition.mjs';
 
   const reduce = matchMedia('(prefers-reduced-motion: reduce)');
   const passage = document.querySelector('#scene-one');

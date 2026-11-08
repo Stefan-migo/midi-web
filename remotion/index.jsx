@@ -1,7 +1,7 @@
 import React from 'react';
 import {AbsoluteFill, Composition, registerRoot, useCurrentFrame} from 'remotion';
-import {studies, draw, progressAt} from './public/motion.mjs';
-import {drawTransition, drawTransitionThree, drawTransitionFour} from './public/transition.mjs';
+import {studies, draw, progressAt} from '../src/motion/motion.mjs';
+import {drawTransition, drawTransitionThree, drawTransitionFour} from '../src/motion/transition.mjs';
 
 function SceneOne() {
   const frame = useCurrentFrame();

@@ -11,5 +11,5 @@ En otra terminal, ejecutá `npm run demo` y abrí http://127.0.0.1:4173/demo.htm
 | Transicion-3 | Marcos partidos en blanco y negro | Siete piezas forman los nuevos marcos y tres salen del cuadro |
 | Transicion-4 | Marcos blancos sobre negro | Nueve piezas se reordenan a partir del cierre de Transicion-3 |
 
-Para exportar, usá `npm run render -- Escena-1 out/escena-1.mp4` o `npm run render -- Transicion-2 out/transicion-2.mp4`. Los gestos de la demo se implementan en el navegador. `public/motion.mjs` contiene la geometría y el ritmo que comparte con Studio.
+Para exportar, usá `npm run render -- Escena-1 out/escena-1.mp4` o `npm run render -- Transicion-2 out/transicion-2.mp4`. Los gestos de la demo se implementan en el navegador. `../src/motion/motion.mjs` contiene la geometría y el ritmo que comparte con Studio.
 

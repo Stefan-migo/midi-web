@@ -80,13 +80,27 @@ Rules:
   project metadata.
 - Motion frame budgets stay in the motion module, never in content.
 
+## Delivery slices
+
+- Slice 1 (`0267c7e`) is **948 authored lines** and exceeds the ~400-line
+  guidance. It was not split because the port is atomic: `src/main.ts` imports
+  `src/content/`, `tsconfig` covers both, and `index.html` loads the entry, so
+  any split produces a commit that does not build or typecheck. Splitting it
+  would trade reviewability for a broken bisect. Recorded here, not hidden.
+- Slice 2 (T3) is the deduplication and documentation unit.
+- Slice 3 starts at T4. It should stay under the slice limit.
+
+`web/` is NOT deleted by T3. It is the live comparison target while S1 is
+validated, so removing it now would destroy the evidence. It is removed in the
+cleanup task once the visual sign-off lands.
+
 ## Tasks
 
 | ID | Specs | What | Route | Commit |
 | --- | --- | --- | --- | --- |
-| T1 | S2, S1 | Vite MPA scaffold, design tokens, `src/motion/` byte-identical move, root route entry | writer | — |
-| T2 | S4, S3 | `src/content/` data layer from the reference copy plus the abandoned Next components | writer | — |
-| T3 | S1, S2 | Remotion consumes `src/motion/`; delete the duplicated `web/*.mjs` copies | parent | — |
+| T1 | S2, S1 | Vite MPA scaffold, design tokens, `src/motion/` byte-identical move, root route entry | writer | `0267c7e` |
+| T2 | S4, S3 | `src/content/` data layer from the reference copy plus the abandoned Next components | writer | `0267c7e` |
+| T3 | S1, S2 | Remotion consumes `src/motion/`; the hand-maintained duplicates in `remotion/public/` are gone | parent | this commit |
 | T4 | S3, S1 | One prerendered HTML entry per route; HUD becomes real links; client router replays the transition | parent | — |
 | T5 | S2 | SEO: per-route title/description, canonical, OG/Twitter, sitemap, robots | writer | — |
 | T6 | S2 | AEO: JSON-LD (Organization, CollectionPage, BreadcrumbList), semantic headings, `llms.txt` | writer | — |
@@ -120,3 +134,29 @@ L4 (evidence): baseline replica verified byte-identical (`web/`, `remotion/`,
 L5 (evidence): the reference is a single document with five hash scenes, not a
 multi-page site. Its ten concrete defects are recorded in the exploration map
 and are tracked by T7.
+
+L6 (evidence, T1+T2+T3): `tsc --noEmit` exit 0, `vite build` exit 0 (20.48 kB
+JS). Parity verified independently of the worker reports: the four motion
+modules are byte-identical to `web/` by md5, `public/assets/` is identical to
+`web/assets/` by recursive diff, and `src/styles/style.css` is byte-identical
+to `web/style.css` with **zero diff lines**. Both servers respond and every
+module in the import graph returns 200, which rules out the blank-page class of
+failure.
+
+L7 (decisions and defects found during integration, none reported by a worker):
+- `src/main.ts` shipped with `// @ts-nocheck`, which silently disabled the only
+  control gate this step had. It was hiding four real errors. Removed; the
+  engine is typed under `strict` + `noUncheckedIndexedAccess` instead, and
+  `allowJs` lets the byte-identical `.mjs` modules keep their own types.
+- The two parallel deliveries collided: T2 put `↗` inside every link label and
+  `main.ts` appended another one, so the links would render `↗ ↗`. Labels now
+  carry text only and the renderer owns the glyph.
+- T2 found real UI copy the data contract had no field for: the `#whisper` hint
+  `tocá una forma` (`web/index.html:12`). Dropping it would have been a visible
+  regression. Added as `Site.hint`; `Site.tagline` became optional because no
+  sourced value exists and inventing one is not allowed.
+- No test drives this port red/green: it is a scaffold plus a byte-identical
+  move, so there is no behavior change to pin. Parity is the check, and it is
+  byte- and hash-level.
+- Open, tracked by T7: the four gallery items share one identical `alt` string,
+  so a screen reader user cannot tell them apart.

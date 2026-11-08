@@ -5,7 +5,7 @@
   "scripts": {
     "studio": "remotion studio index.jsx --port=3030",
     "render": "remotion render index.jsx",
-    "demo": "python -m http.server 4173 --bind 127.0.0.1 --directory public"
+    "demo": "python -m http.server 4173 --bind 127.0.0.1 --directory .."
   },
   "keywords": [],
   "author": "",
