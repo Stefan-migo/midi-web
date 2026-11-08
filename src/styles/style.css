@@ -22,5 +22,5 @@
 @media (max-width: 650px) { .signature { width: 140px; } }
 
 #world .signature, #world .scene-copy { top: 0; left: 0; }
-#world[data-label-motion] .signature { transition: transform 1250ms cubic-bezier(.45, 0, .55, 1); }
-#world[data-label-motion] .scene-copy { transition: transform 1050ms cubic-bezier(.45, 0, .55, 1) 80ms; }
+#world[data-label-motion] .signature { transition: transform var(--label-ms, 1250ms) cubic-bezier(.45, 0, .55, 1); }
+#world[data-label-motion] .scene-copy { transition: transform var(--label-ms, 1250ms) cubic-bezier(.45, 0, .55, 1); }
