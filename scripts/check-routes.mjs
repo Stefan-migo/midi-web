@@ -64,6 +64,32 @@ for (const route of ROUTES) {
     assert.ok(content.trim().length >= 20, `description is too short: "${content}"`);
   });
 
+  for (const [label, pattern] of [
+    ['og:title', /<meta property="og:title" content="([^"]*)">/i],
+    ['og:description', /<meta property="og:description" content="([^"]*)">/i],
+    ['og:type', /<meta property="og:type" content="([^"]*)">/i],
+    ['og:site_name', /<meta property="og:site_name" content="([^"]*)">/i],
+    ['twitter:card', /<meta name="twitter:card" content="([^"]*)">/i],
+    ['twitter:title', /<meta name="twitter:title" content="([^"]*)">/i],
+  ]) {
+    expect(label, () => {
+      const value = extract(html, pattern, label).trim();
+      assert.ok(value.length > 0, `${label} is empty`);
+      if (label === 'og:title') {
+        const title = extract(html, /<title>([\s\S]*?)<\/title>/i, '<title>').trim();
+        assert.equal(value, title, 'og:title does not equal <title>');
+      }
+    });
+  }
+
+  expect('canonical', () => {
+    const href = extract(html, /rel="canonical" href="([^"]+)"/i, 'rel="canonical"');
+    assert.match(href, /^https?:\/\//, `canonical is not absolute: ${href}`);
+    assert.ok(href.endsWith(route.path), `canonical ${href} does not end with ${route.path}`);
+    const ogUrl = extract(html, /property="og:url" content="([^"]+)"/i, 'og:url');
+    assert.equal(ogUrl, href, 'og:url does not equal the canonical URL');
+  });
+
   expect('heading', () => {
     const heading = extract(
       html,
@@ -108,6 +134,34 @@ for (const route of ROUTES) {
     const hashes = html.match(/href="#[^"]*"/g) ?? [];
     assert.equal(hashes.length, 0, `hash links still present: ${hashes.join(', ')}`);
   });
+}
+
+const robotsPath = join('dist', 'robots.txt');
+try {
+  const robots = await readFile(robotsPath, 'utf8');
+  assert.ok(robots.startsWith('User-agent: *'), 'expected robots.txt to start with User-agent: *');
+  assert.match(
+    robots,
+    /^Sitemap: https?:\/\/\S+$/m,
+    'expected an absolute Sitemap: line in robots.txt',
+  );
+} catch (error) {
+  failures.push(`dist/robots.txt: expected file with User-agent: * (${error.message})`);
+}
+
+try {
+  const sitemap = await readFile(join('dist', 'sitemap.xml'), 'utf8');
+  const locs = sitemap.match(/<loc>[^<]+<\/loc>/g) ?? [];
+  assert.equal(
+    locs.length,
+    ROUTES.length,
+    `expected ${ROUTES.length} <loc> entries in the sitemap, found ${locs.length}`,
+  );
+  for (const loc of locs) {
+    assert.match(loc, /^<loc>https?:\/\/[^<]+<\/loc>$/, `not an absolute loc: ${loc}`);
+  }
+} catch (error) {
+  failures.push(`dist/sitemap.xml: ${error.message}`);
 }
 
 function checkUnique(label, map) {

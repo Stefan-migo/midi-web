@@ -1,9 +1,11 @@
 import type { Scene, Site } from '../content/types';
 import { counterLabel, type RouteSpec } from './routes';
+import { absoluteUrl, type SiteOptions } from './seo';
 
 /**
  * Build-time transform that turns the shared HTML shell into the document for
- * one route: its own title, description, heading, nav state and counter.
+ * one route: its own title, description, heading, nav state, counter and social
+ * tags.
  *
  * It is pure and throws when the shell loses a marker it depends on, so a
  * markup change surfaces as a build error instead of a silently wrong page.
@@ -66,10 +68,33 @@ function navMarkup(routes: RouteSpec[], active: RouteSpec): string {
   return `<nav aria-label="Escenas" class="scene-map">${links}</nav>`;
 }
 
-/** `00 / 04`: the ordinal, then the last index — that is the reference's counter. */
-export interface RenderOptions {
-  /** Deploy base from `VITE_BASE`, always ending with a slash. */
-  base: string;
+/**
+ * Open Graph, Twitter and canonical. Canonical and `og:url` are only emitted
+ * when the origin is known, so the site never advertises a guessed domain.
+ */
+function socialHead(
+  route: RouteSpec,
+  site: Site,
+  title: string,
+  description: string,
+  options: SiteOptions,
+): string {
+  const tags = [
+    `<meta property="og:type" content="website">`,
+    `<meta property="og:site_name" content="${escapeHtml(site.name)}">`,
+    `<meta property="og:locale" content="es">`,
+    `<meta property="og:title" content="${escapeHtml(title)}">`,
+    `<meta property="og:description" content="${escapeHtml(description)}">`,
+    `<meta name="twitter:card" content="summary">`,
+    `<meta name="twitter:title" content="${escapeHtml(title)}">`,
+    `<meta name="twitter:description" content="${escapeHtml(description)}">`,
+  ];
+  const url = absoluteUrl(route.path, options);
+  if (url) {
+    tags.unshift(`<link rel="canonical" href="${escapeHtml(url)}">`);
+    tags.push(`<meta property="og:url" content="${escapeHtml(url)}">`);
+  }
+  return tags.join('');
 }
 
 export function renderRouteHtml(
@@ -77,7 +102,7 @@ export function renderRouteHtml(
   route: RouteSpec,
   routes: RouteSpec[],
   site: Site,
-  options: RenderOptions,
+  options: SiteOptions,
 ): string {
   const { scene } = route;
   const title = scene.order === 0 ? `${site.name} / ${scene.subtitle}` : `${scene.title} — ${site.name}`;
@@ -90,6 +115,12 @@ export function renderRouteHtml(
     /<meta name="description" content="[^"]*">/i,
     `<meta name="description" content="${escapeHtml(description)}">`,
     'the description meta tag',
+  );
+  html = replaceOnce(
+    html,
+    /<!--midi:seo-->/,
+    socialHead(route, site, title, description, options),
+    'the social head marker',
   );
   html = replaceOnce(
     html,
@@ -106,6 +137,7 @@ export function renderRouteHtml(
   html = replaceInner(html, 'scene-title', escapeHtml(scene.title));
   html = replaceInner(html, 'scene-subtitle', escapeHtml(scene.subtitle));
   html = replaceInner(html, 'advance', counterLabel(scene.order, routes.length));
+
   if (options.base !== '/') {
     const prefix = options.base.replace(/\/$/, '');
     html = html.replace(/href="\/(?!\/)/g, `href="${prefix}/`);

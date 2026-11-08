@@ -102,7 +102,7 @@ cleanup task once the visual sign-off lands.
 | T2 | S4, S3 | `src/content/` data layer from the reference copy plus the abandoned Next components | writer | `0267c7e` |
 | T3 | S1, S2 | Remotion consumes `src/motion/`; the hand-maintained duplicates in `remotion/public/` are gone | parent | this commit |
 | T4 | S3, S1 | One prerendered HTML entry per route; HUD becomes real links; client router replays the transition | parent | this commit |
-| T5 | S2 | SEO: per-route title/description, canonical, OG/Twitter, sitemap, robots | writer | — |
+| T5 | S2 | SEO: per-route title/description, canonical, OG/Twitter, sitemap, robots | writer | this commit |
 | T6 | S2 | AEO: JSON-LD (Organization, CollectionPage, BreadcrumbList), semantic headings, `llms.txt` | writer | — |
 | T7 | S1, S3 | Defect pass: `00 / 03` vs `04` counter, dead `.split` CSS, orphan assets, hit regions derived from data, a11y (`aria-labelledby`, `inert`, real hit labels) | writer | — |
 | T8 | S1, S3 | Design polish pass after parity is verified; needs a design brief (gentle-design) | parent | — |
@@ -176,3 +176,14 @@ so there is no second copy of the markup to keep in sync, and a missing shell
 marker throws at build time instead of emitting a silently wrong page. In
 development a middleware maps the route paths onto the shell, so `/portafolio/`
 renders the same way it will in production.
+
+L9 (T5): the canonical origin is `https://midi4all.art`, set as `DEFAULT_SITE_URL` in `vite.config.ts` and overridable with `SITE_URL`, so
+canonical, `og:url`, `sitemap.xml` and the `robots.txt` sitemap line all derive
+from one constant. Verified on the real build: five absolute canonicals, a
+sitemap with five absolute `<loc>` entries, and `og:title` equal to each
+route's `<title>`. `check-routes` now REQUIRES those artifacts, so removing the
+origin fails the build check instead of silently dropping them.
+
+The domain came from the owner as "probably" `midi4all.art`. It matches the
+`midi4all` handle already used on Instagram and TikTok. It is one constant to
+change if it moves.

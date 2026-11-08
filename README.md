@@ -20,8 +20,17 @@ npm run preview    # sirve dist/ para revisarlo
 npm run typecheck  # tsc --noEmit
 ```
 
-Para publicar en un subdirectorio (por ejemplo GitHub Pages en `/midi-web/`)
-definí `VITE_BASE` antes del build. En la raíz de un dominio no hace falta.
+## Publicación y SEO
+
+`VITE_BASE` define la ruta base de los assets, enlaces y URLs generadas (por
+ejemplo, `/midi-web/` para un subdirectorio). `SITE_URL` define el origen
+público y por defecto es `https://midi4all.art`; al compilar genera canonical,
+`og:url`, `sitemap.xml` y la referencia a ese sitemap en `robots.txt`. Para
+compilar un preview en otro origen: `SITE_URL=https://otro.dominio npm run build`.
+
+`npm run verify` corre typecheck, build y `check:routes`, que verifica los
+documentos generados: título y description propios por ruta, canonical absoluta,
+un solo `aria-current`, sitemap completo y ausencia de navegación por hash.
 
 ## Dónde vive cada cosa
 
