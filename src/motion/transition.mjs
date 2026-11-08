@@ -63,7 +63,7 @@ export function drawTransition(frame) {
 
   // Once assembled, draw the continuous paths to avoid antialiasing seams between tiles.
   if (frame >= assemblyFrame) {
-    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}"
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" preserveAspectRatio="xMidYMid slice"
       style="display:block;width:100%;height:100%;background:${paper}" aria-hidden="true">
       <rect width="${width}" height="${height}" fill="${paper}"/>
       <g fill="${ink}" transform="scale(${width / 1065} ${height / 1068})">${targetSolid}${targetOutline}</g>
@@ -71,7 +71,7 @@ export function drawTransition(frame) {
   }
 
   const split = width * smooth((frame - 30) / 46);
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}"
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" preserveAspectRatio="xMidYMid slice"
     style="display:block;width:100%;height:100%;background:${ink}" aria-hidden="true">
     <defs>
       ${pieceMasks}
@@ -136,7 +136,7 @@ export function drawTransitionThree(frame) {
     ? `<g transform="scale(${width / 1065} ${height / 1068})">${thirdArtwork[0].shape}${lowerFrame}${thirdArtwork.slice(5).map(({shape}) => shape).join('')}</g>`
     : thirdPieces.map((piece) => animatePiece(piece, frame, width / 1065, height / 1068)).join('');
 
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}"
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" preserveAspectRatio="xMidYMid slice"
     style="display:block;width:100%;height:100%;background:${paper}" aria-hidden="true">
     <defs>
       ${assembled ? '' : thirdMasks}
@@ -198,7 +198,7 @@ export function drawTransitionFour(frame) {
     ? `<g transform="scale(${width / 1031} ${height / 1066})">${fourthPieces.map(({shape}) => shape).join('')}</g>`
     : fourthPieces.map((piece) => animatePiece(piece, frame, width / 1065, height / 1068)).join('');
 
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}"
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" preserveAspectRatio="xMidYMid slice"
     style="display:block;width:100%;height:100%;background:${ink}" aria-hidden="true">
     <defs>
       ${assembled ? '' : fourthMasks}

@@ -26,6 +26,30 @@ directorio."
 S6. Remote, done: "a partir de este directorio crearemos el github proyect
 remoto."
 
+S7. The navigation lock, in the user's words: "Hay un error en la primera
+transicion, desde la pagina inicio a la pagina portafolio. Cuando se activa la
+transicion a traves del click del logo en el inicio o del scroll, avanza
+solamente el logo del header, en este caso, junto con el texto, pero no se
+realiza la transicion, la transicion principal, y se queda bloqueado. Ya no se
+puede ir ni volver. La unica forma es hacerlo a traves de los botones de los
+cuadrados de la navegacion abajo."
+
+S8. The transitions do not cover the viewport, in the user's words: "los cambios
+transicionales donde se cambia de color el fondo, el background, se cambia el
+background solamente en este cuadrado donde se configuro la transicion, pero el
+resto del width quedan dos franjas laterales... Hay que considerar la transicion
+para el full width y tambien el alto. En la version mobile... las franjas que en
+la version escritorio se ven en los laterales... se ven para arriba y para abajo,
+para superior e inferior."
+
+S9. New hidden feature, in the user's words: "quiero crear el path /midi-links y
+/midi-links/add... para recrear una especie de Linktree, pero propio de MIDI...
+Este Linktree y este path solo se va a poder acceder escribiendo directamente la
+URL. No va a tener acceso dentro de la pagina y va a estar disenado solamente
+para mobile version, solo para celular, modo celular. Y el link, el siguiente
+path, el MIDI Link Add, es para poder agregar links sin necesidad de crear un
+CMS."
+
 ## Architecture decision (recorded, not open)
 
 Vite. Static multi-page prerendered HTML, one real URL per section, vanilla
@@ -105,7 +129,9 @@ cleanup task once the visual sign-off lands.
 | T5 | S2 | SEO: per-route title/description, canonical, OG/Twitter, sitemap, robots | writer | this commit |
 | T6 | S2 | AEO: JSON-LD (Organization, CollectionPage, BreadcrumbList), semantic headings, `llms.txt` | writer | this commit |
 | T7 | S1, S3 | Defect pass: `00 / 03` vs `04` counter, dead `.split` CSS, orphan assets, hit regions derived from data, a11y (`aria-labelledby`, `inert`, real hit labels) | writer | — |
-| T8 | S1, S3 | Design polish pass after parity is verified; needs a design brief (gentle-design) | parent | — |
+| T8 | S1, S3 | Design polish pass after parity is verified; needs a design brief (gentle-design) | parent | `86e14d0` |
+| T9 | S8 | Every generated svg wrapper must declare the same `preserveAspectRatio`; the four transition wrappers currently fall back to the letterboxing default | writer | this commit |
+| T10 | S7 | Navigation must not be gated on an animation flag that can stay set: reproduce the 0-to-1 lock headlessly, then fix the state machine | writer | this commit |
 
 ## Log
 
@@ -277,3 +303,30 @@ brand commit had versioned 71 paths, nearly all binary mirrors of twelve marks.
 The repository now versions the deck, the usage guide and the twelve vector
 sources, and ignores the print, PNG, WebP and favicon mirrors, which stay on
 disk. A candidate has to be readable by a reviewer to be reviewable.
+
+L15 (T9/T10, the two production bugs): S8 was my regression. T8 gave
+`motion.mjs` `preserveAspectRatio="xMidYMid slice"` and left the four
+`transition.mjs` wrappers without the attribute, so they fell back to
+`xMidYMid meet` and letterboxed: the resting scene covered, the transitions did
+not. All four now declare `slice`. The alternative — stretching the canvases to
+fill — is forbidden by the logo guide, which requires the mark's proportions to
+be preserved, so the answer is cover-and-crop.
+
+S7 was a state-machine defect, not a drawing defect. `advance()` began with
+`if (stopPlayback || !reveal.hidden) return;`, so a playback flag that stayed set
+killed the wheel and the artwork click forever while the HUD squares kept
+working, because those enter through `navigate()` and never touch the guard. The
+fix removes the failure class rather than the symptom: navigation is no longer
+gated on the animation at all, `startTransition()` is the single owner of the
+in-flight handle, completion is idempotent and cannot be overwritten by a
+synchronous settle, and `clearStalledTransition()` recovers a transition that
+paints nothing for 1500 ms.
+
+The delegated worker returned this unit half-done: two of four wrappers and no
+T10. Finished by hand. Evidence: `tsc --noEmit` exit 0 and
+`scripts/check-motion.mjs` asserting 12 renders and 8 directed transitions; that
+script fails on the old code at position 1.5, which is the RED proof.
+
+Still needs a browser: the lock was reported, never reproduced headlessly, so
+the human check on the live site at 1440x900, 390x844 and 1920x1080 is what
+confirms it.
