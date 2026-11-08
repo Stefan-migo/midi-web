@@ -12,7 +12,9 @@ const settledFrames = [58, 91, 91, 91];
 const frameRate = 30;
 
 export function renderPosition(position) {
-  const segment = Math.min(3, Math.floor(position));
+  // A position outside [0, 4] has no segment. Both ends are clamped because a
+  // negative position used to index -1 and throw, which killed the frame loop.
+  const segment = Math.max(0, Math.min(3, Math.floor(position)));
   return renders[segment]((position - segment) * lastFrames[segment]);
 }
 
@@ -46,7 +48,11 @@ export function playBetween(from, to, update, done) {
   let nextFrame;
   let stopNext;
   function tick(now) {
-    const t = duration ? Math.min(1, (now - startTime) / duration) : 1;
+    // A browser may hand the callback a timestamp earlier than the moment the
+    // frame was scheduled, so the first `t` can be negative. Clamping it keeps
+    // the animation inside its segment instead of running backwards.
+    const elapsed = (now - startTime) / duration;
+    const t = duration ? Math.max(0, Math.min(1, elapsed)) : 1;
     if (t < 1) {
       update(startPosition + (endPosition - startPosition) * t);
       nextFrame = requestAnimationFrame(tick);
