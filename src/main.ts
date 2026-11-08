@@ -9,7 +9,7 @@ import {
   type RouteSpec,
 } from './lib/routes';
 import { placeLabels } from './motion/label-layout.mjs';
-import { playBetween, regions, renderPosition } from './motion/site-motion.mjs';
+import { playBetween, regions, renderPosition, transitionDurationMs } from './motion/site-motion.mjs';
 
 /**
  * Per-scene hit boxes as produced by `site-motion.mjs`: `[left, top, right, bottom]`
@@ -53,6 +53,19 @@ let cancelTransition: (() => void) | undefined;
 let transitionPaintedAt = 0;
 /** A transition that paints nothing for this long is treated as dead. */
 const TRANSITION_STALL_MS = 1500;
+/** Approximate duration of one single-segment transition, to price a wrap. */
+const SEGMENT_MS = 3000;
+/** A wrap is one gesture, so it plays compressed instead of scene by scene. */
+const WRAP_TOTAL_MS = 2400;
+
+/**
+ * A wrap crosses several segments; without compressing it the site would play
+ * three seconds per scene to get home.
+ */
+function transitionTimeScale(from: number, to: number): number {
+  const distance = Math.abs(to - from);
+  return distance <= 1 ? 1 : WRAP_TOTAL_MS / (distance * SEGMENT_MS);
+}
 let returnFocus: HTMLElement | undefined;
 
 function currentScene(): Scene {
@@ -135,6 +148,13 @@ function setScene(animate = true): void {
     else link.removeAttribute('aria-current');
   });
   const shouldAnimate = animate && !paused && !reduced.matches && position !== targetPosition;
+  // The labels and the artwork must start and finish together, so the label
+  // transition duration is derived from the same number the animation uses.
+  const labelScale = transitionTimeScale(position, targetPosition);
+  world.style.setProperty(
+    '--label-ms',
+    `${Math.round(transitionDurationMs(position, targetPosition, labelScale))}ms`,
+  );
   placeLabels(sceneIndex, shouldAnimate);
   if (!shouldAnimate) {
     showFrame(targetPosition);
@@ -244,6 +264,7 @@ function startTransition(): void {
       showFrame(next);
     },
     settle,
+    transitionTimeScale(position, targetPosition),
   );
   // A transition that settles synchronously must not leave a handle behind.
   cancelTransition = settled ? undefined : handle;
@@ -395,36 +416,3 @@ if (site.hint) whisperNode.textContent = site.hint;
 adoptLegacyHash();
 syncMotionButton();
 setScene(false);
-
-/**
- * TEMPORARY DIAGNOSTIC (midi:debug). Open any route with `?debug=1` to see the
- * navigation state on screen and any uncaught error. Remove once the reported
- * lock is understood.
- */
-if (new URLSearchParams(location.search).has('debug')) {
-  const panel = document.createElement('pre');
-  panel.style.cssText =
-    'position:fixed;left:0;right:0;bottom:0;z-index:99;margin:0;padding:8px 10px;' +
-    'background:#f4f4f4;color:#111;font:11px/1.5 ui-monospace,monospace;' +
-    'white-space:pre-wrap;max-height:48vh;overflow:auto';
-  document.body.append(panel);
-  const write = (tag: string, detail: string): void => {
-    panel.textContent = `[${tag}] ${detail}
-${panel.textContent ?? ''}`.slice(0, 3000);
-  };
-  addEventListener('error', (event) => {
-    write('error', `${event.message} @ ${event.filename}:${event.lineno}:${event.colno}`);
-  });
-  addEventListener('unhandledrejection', (event) => {
-    write('rejection', String(event.reason));
-  });
-  setInterval(() => {
-    write(
-      'state',
-      `position=${position.toFixed(3)} target=${targetPosition} scene=${sceneIndex} ` +
-        `revealHidden=${reveal.hidden} inFlight=${cancelTransition ? 'yes' : 'no'} ` +
-        `painted=${transitionPaintedAt > 0 ? Math.round(performance.now() - transitionPaintedAt) + 'ms ago' : 'idle'} ` +
-        `path=${location.pathname}`,
-    );
-  }, 700);
-}

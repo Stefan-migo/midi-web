@@ -35,7 +35,29 @@ export const regions = [
     [621,370,691,640],[215,443,389,1066],[744,370,1004,1066],[628,965,699,1066]],1031,1066),
 ];
 
-export function playBetween(from, to, update, done) {
+/**
+ * Total time `playBetween` will spend travelling from `from` to `to`, including
+ * the chained segments of a wrap. The labels use this same number so they start
+ * and finish with the artwork instead of arriving early.
+ */
+export function transitionDurationMs(from, to, timeScale = 1) {
+  let cursor = from;
+  let total = 0;
+  let guard = 0;
+  while (cursor !== to && guard++ < 16) {
+    const forward = cursor < to;
+    const segment = forward ? Math.floor(cursor) : Math.ceil(cursor) - 1;
+    const boundary = forward ? Math.min(to, segment + 1) : Math.max(to, segment);
+    const end = settledFrames[segment] / lastFrames[segment];
+    const startPosition = forward ? cursor : Math.min(cursor, segment + end);
+    const endPosition = forward ? Math.min(boundary, segment + end) : boundary;
+    total += Math.abs(endPosition - startPosition) * lastFrames[segment] * 1000 / frameRate * timeScale;
+    cursor = boundary;
+  }
+  return total;
+}
+
+export function playBetween(from, to, update, done, timeScale = 1) {
   if (from === to) { update(to); done(); return () => {}; }
   const forward = from < to;
   const segment = forward ? Math.floor(from) : Math.ceil(from) - 1;
@@ -43,7 +65,7 @@ export function playBetween(from, to, update, done) {
   const end = settledFrames[segment] / lastFrames[segment];
   const startPosition = forward ? from : Math.min(from, segment + end);
   const endPosition = forward ? Math.min(boundary, segment + end) : boundary;
-  const duration = Math.abs(endPosition - startPosition) * lastFrames[segment] * 1000 / frameRate;
+  const duration = Math.abs(endPosition - startPosition) * lastFrames[segment] * 1000 / frameRate * timeScale;
   const startTime = performance.now();
   let nextFrame;
   let stopNext;
@@ -59,7 +81,7 @@ export function playBetween(from, to, update, done) {
     } else {
       update(boundary);
       if (boundary === to) done();
-      else stopNext = playBetween(boundary, to, update, done);
+      else stopNext = playBetween(boundary, to, update, done, timeScale);
     }
   }
   nextFrame = requestAnimationFrame(tick);

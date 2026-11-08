@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { renderPosition, playBetween } from '../src/motion/site-motion.mjs';
+import { renderPosition, playBetween, transitionDurationMs } from '../src/motion/site-motion.mjs';
 
 const positions = [0, 0.3, 0.5, 0.78, 0.79, 1, 1.5, 2, 2.5, 3, 3.5, 4];
 for (const position of positions) {
@@ -73,7 +73,62 @@ function driveWithEarlyTimestamp(from, to) {
 }
 
 for (const [from, to] of [[0, 1], [1, 2], [2, 3], [3, 4]]) driveWithEarlyTimestamp(from, to);
+
+// The wrap from the last scene back to the first used to chain four segment
+// transitions, about twelve seconds to get home. It must play as one compressed
+// gesture instead.
+function driveWrap(from, to, timeScale) {
+  const rendered = [];
+  let completions = 0;
+  playBetween(from, to, (position) => rendered.push(position), () => completions++, timeScale);
+  let steps = 0;
+  while (pending.size) {
+    assert.ok(++steps < 5000, `${from}→${to} wrap: animation did not terminate`);
+    const [id, callback] = pending.entries().next().value;
+    pending.delete(id);
+    now += 1000 / 30;
+    callback(now);
+  }
+  assert.equal(completions, 1, `${from}→${to} wrap: done must be called exactly once`);
+  assert.equal(rendered.at(-1), to, `${from}→${to} wrap: final render must equal target`);
+  for (const position of rendered) {
+    assert.ok(
+      position >= 0 && position <= 4,
+      `${from}→${to} wrap: rendered ${position}, outside 0-4`,
+    );
+  }
+  return steps;
+}
+
+const WRAP_SCALE = 2400 / (4 * 3000);
+const wrapForward = driveWrap(0, 4, WRAP_SCALE);
+const wrapBack = driveWrap(4, 0, WRAP_SCALE);
+assert.ok(
+  wrapForward < 90 && wrapBack < 90,
+  `a wrap must finish in under 90 frames, got ${wrapForward} and ${wrapBack}`,
+);
+
+// The signature and the scene copy read their transition duration from this same
+// number. If the two drift apart, the labels arrive before the artwork, which is
+// exactly what the owner saw.
+const frameMs = 1000 / 30;
+const tolerance = 3 * frameMs;
+for (const [from, to, scale] of [
+  [0, 1, 1],
+  [1, 2, 1],
+  [3, 4, 1],
+  [0, 4, WRAP_SCALE],
+  [4, 0, WRAP_SCALE],
+]) {
+  const frames = driveWrap(from, to, scale);
+  const actual = frames * frameMs;
+  const declared = transitionDurationMs(from, to, scale);
+  assert.ok(
+    Math.abs(actual - declared) <= tolerance,
+    `${from}→${to}: labels would run ${Math.round(declared)}ms but the artwork takes ${Math.round(actual)}ms`,
+  );
+}
 console.log(
-  `check-motion: 12 renders, 8 directed transitions and 4 early-timestamp ` +
-    `transitions OK; positions outside 0-4 are clamped`,
+  `check-motion: 12 renders, 8 directed transitions, 4 early-timestamp transitions, ` +
+    `2 compressed wraps and 5 duration-parity checks OK`,
 );
