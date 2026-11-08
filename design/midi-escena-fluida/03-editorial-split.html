@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>03 · Editorial split</title>
+<style>
+  :root{--paper:#f4f4f4;--ink:#111111;--border:#777;--mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace}
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{background:var(--ink);color:var(--paper);font-family:var(--mono);overflow:hidden}
+  .world{position:relative;height:100svh;min-height:450px;overflow:hidden;isolation:isolate;
+    display:grid;grid-template-columns:minmax(420px,44%) 1fr}
+
+  /* La obra deja de ser toda la página: ocupa un campo propio que sangra hasta
+     el borde. La columna izquierda gana el espacio que necesita la tipografía. */
+  .art{position:relative;overflow:hidden;border-left:1px solid rgba(244,244,244,.22)}
+  .art svg{position:absolute;inset:0;width:100%;height:100%;display:block}
+  .art figcaption{position:absolute;right:26px;bottom:26px;font-size:10px;letter-spacing:.14em;
+    text-transform:uppercase;color:rgba(244,244,244,.6)}
+
+  .column{position:relative;display:flex;flex-direction:column;justify-content:space-between;
+    padding:30px 34px 26px}
+  .column header{display:flex;align-items:flex-start;justify-content:space-between;gap:20px}
+  .signature{font-size:23px;line-height:1;letter-spacing:-.02em}
+  .coordinates{font-size:11px;opacity:.75}
+
+  .scene h1{margin:0;font-size:clamp(40px,5.4vw,86px);line-height:.94;letter-spacing:-.045em;
+    font-weight:500;text-wrap:balance}
+  .scene p.kicker{margin:18px 0 0;font-size:13px;letter-spacing:.16em;text-transform:uppercase;opacity:.75}
+  .scene p.body{margin:26px 0 0;font-size:15px;line-height:1.7;max-width:44ch;opacity:.9}
+
+  .column footer{display:flex;align-items:flex-end;justify-content:space-between;gap:20px}
+  .whisper{font-size:11px;letter-spacing:.06em;opacity:.75}
+  .map{display:flex;gap:12px}
+  .map a{width:12px;height:12px;border:1px solid;display:block}
+  .map a[aria-current]{background:var(--paper);transform:rotate(90deg)}
+  .advance{background:none;border:0;color:inherit;font:inherit;font-size:10px;padding:6px 0;cursor:pointer}
+  .advance span{font-size:20px;margin-left:14px}
+  .motion{position:absolute;top:64px;right:30px;width:27px;height:27px;border:1px solid var(--border);
+    background:none;color:inherit;font:inherit;font-size:10px;display:grid;place-items:center;cursor:pointer}
+
+  .annotation{position:absolute;top:24px;left:50%;transform:translateX(-50%);z-index:4;
+    font-size:10px;letter-spacing:.18em;text-transform:uppercase;padding:7px 12px;
+    border:1px dashed rgba(244,244,244,.45);color:rgba(244,244,244,.75)}
+
+  a:focus-visible,button:focus-visible,button:focus-visible{outline:2px dashed currentColor;outline-offset:6px}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+  @media (max-width:900px){
+    .world{grid-template-columns:1fr;grid-template-rows:auto 1fr}
+    .art{order:-1;height:46svh;border-left:0;border-bottom:1px solid rgba(244,244,244,.22)}
+    .scene h1{font-size:clamp(34px,9vw,54px)}
+  }
+</style>
+</head>
+<body>
+<main class="world">
+  <div class="column">
+    <p class="annotation">03 · editorial split</p>
+
+    <header>
+      <a class="signature" href="#">MIDI</a>
+      <span class="coordinates">315 : 642</span>
+    </header>
+
+    <div class="scene">
+      <h1>Entre una mirada y otra</h1>
+      <p class="kicker">MIDI / colectivo artístico</p>
+      <p class="body">Un punto de encuentro para imaginar, experimentar y dar forma a nuevas ideas. Entre una mirada y otra aparecen otras posibilidades.</p>
+    </div>
+
+    <footer>
+      <span class="whisper">tocá una forma</span>
+      <nav class="map" aria-label="Escenas">
+        <a href="#" aria-label="Inicio"></a>
+        <a href="#" aria-label="Portafolio"></a>
+        <a href="#" aria-label="Nosotros" aria-current="page"></a>
+        <a href="#" aria-label="Contacto"></a>
+        <a href="#" aria-label="Exploraciones"></a>
+      </nav>
+      <button class="advance" type="button" aria-label="Siguiente composición">02 / 04 <span>↗</span></button>
+    </footer>
+
+    <button class="motion" type="button" aria-label="Pausar movimiento">Ⅱ</button>
+  </div>
+
+  <figure class="art" aria-hidden="true">
+    <svg viewBox="0 0 900 900" preserveAspectRatio="xMidYMid slice">
+      <defs>
+        <symbol id="iso" viewBox="0 0 202 172">
+          <path fill="#f4f4f4" fill-rule="evenodd" d="M10.50,0.16L137.50,0.00L138.50,0.50L138.50,52.50L137.50,53.50L128.50,53.50L127.84,54.50L127.50,171.84L75.50,172.00L74.16,171.50L74.16,54.50L73.50,53.50L54.50,53.50L53.84,54.50L53.84,171.50L52.50,172.00L1.50,172.00L0.16,171.50L0.16,54.50L0.50,53.38L1.50,53.16L9.50,53.16L10.16,52.50Z M148.50,0.50L149.50,0.00L201.50,0.00L202.00,0.50L202.00,52.50L201.50,53.50L149.50,53.50L148.50,52.51Z M149.50,63.50L201.50,63.50L202.00,64.50L202.00,171.50L201.50,172.00L149.50,172.00L148.50,171.50L148.50,64.50Z"/>
+        </symbol>
+      </defs>
+      <rect width="900" height="900" fill="none" stroke="#f4f4f4" stroke-opacity=".18"/>
+      <use href="#iso" x="40"  y="60"  width="250" height="213"/>
+      <use href="#iso" x="330" y="30"  width="140" height="119" opacity=".45"/>
+      <use href="#iso" x="520" y="90"  width="300" height="255" opacity=".85"/>
+      <use href="#iso" x="140" y="330" width="180" height="153" opacity=".35"/>
+      <use href="#iso" x="350" y="300" width="420" height="357" opacity=".95"/>
+      <use href="#iso" x="60"  y="560" width="300" height="255" opacity=".6"/>
+      <use href="#iso" x="400" y="690" width="220" height="187"/>
+      <use href="#iso" x="680" y="560" width="160" height="136" opacity=".4"/>
+      <line x1="0" y1="500" x2="900" y2="500" stroke="#f4f4f4" stroke-opacity=".2"/>
+    </svg>
+    <figcaption>Archivo MIDI · 04 piezas</figcaption>
+  </figure>
+</main>
+</body>
+</html>

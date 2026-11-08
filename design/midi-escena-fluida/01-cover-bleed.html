@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>01 · Cover bleed</title>
+<style>
+  :root{--paper:#f4f4f4;--ink:#111111;--border:#777;--mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace}
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{background:var(--ink);color:var(--paper);font-family:var(--mono);overflow:hidden}
+  .world{position:relative;height:100svh;min-height:450px;overflow:hidden;isolation:isolate}
+
+  /* La única diferencia con la referencia: slice en lugar de meet. */
+  .art{position:absolute;inset:0}
+  .art svg{display:block;width:100%;height:100%}
+
+  .annotation{position:absolute;top:22px;left:50%;transform:translateX(-50%);z-index:4;
+    font-size:10px;letter-spacing:.18em;text-transform:uppercase;padding:7px 12px;
+    border:1px dashed rgba(244,244,244,.45);color:rgba(244,244,244,.75)}
+
+  .signature{position:absolute;top:26px;left:30px;z-index:3;mix-blend-mode:difference;
+    font-size:23px;line-height:1;letter-spacing:-.02em}
+  .coordinates{position:absolute;top:30px;right:30px;z-index:3;font-size:11px;mix-blend-mode:difference}
+  .motion{position:absolute;top:65px;right:30px;z-index:3;width:27px;height:27px;
+    border:1px solid var(--border);background:none;color:inherit;font:inherit;font-size:10px;
+    display:grid;place-items:center;cursor:pointer}
+
+  /* La escala tipográfica nueva: el título deja de ser una etiqueta de 15px. */
+  .scene{position:absolute;left:5%;bottom:16%;z-index:3;mix-blend-mode:difference;pointer-events:none}
+  .scene h1{margin:0;font-size:clamp(48px,10vw,160px);line-height:.9;letter-spacing:-.045em;
+    font-weight:500;text-wrap:balance}
+  .scene p{margin:14px 0 0;font-size:clamp(12px,1.1vw,15px);letter-spacing:.16em;
+    text-transform:uppercase}
+
+  .whisper{position:absolute;left:30px;bottom:29px;z-index:3;font-size:11px;
+    letter-spacing:.06em;mix-blend-mode:difference}
+  .map{position:absolute;left:50%;bottom:27px;transform:translateX(-50%);z-index:3;
+    display:flex;gap:12px;mix-blend-mode:difference}
+  .map a{width:12px;height:12px;border:1px solid;display:block}
+  .map a[aria-current]{background:var(--paper);transform:rotate(90deg)}
+  .advance{position:absolute;right:28px;bottom:20px;z-index:3;background:none;border:0;
+    color:inherit;font:inherit;font-size:10px;padding:8px;cursor:pointer;mix-blend-mode:difference}
+  .advance span{font-size:22px;margin-left:20px}
+
+  a:focus-visible,button:focus-visible{outline:2px dashed currentColor;outline-offset:6px}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<main class="world">
+  <div class="art" aria-hidden="true">
+    <svg viewBox="0 0 1200 900" preserveAspectRatio="xMidYMid slice">
+      <defs>
+        <symbol id="iso" viewBox="0 0 202 172">
+          <path fill="#f4f4f4" fill-rule="evenodd" d="M10.50,0.16L137.50,0.00L138.50,0.50L138.50,52.50L137.50,53.50L128.50,53.50L127.84,54.50L127.50,171.84L75.50,172.00L74.16,171.50L74.16,54.50L73.50,53.50L54.50,53.50L53.84,54.50L53.84,171.50L52.50,172.00L1.50,172.00L0.16,171.50L0.16,54.50L0.50,53.38L1.50,53.16L9.50,53.16L10.16,52.50Z M148.50,0.50L149.50,0.00L201.50,0.00L202.00,0.50L202.00,52.50L201.50,53.50L149.50,53.50L148.50,52.51Z M149.50,63.50L201.50,63.50L202.00,64.50L202.00,171.50L201.50,172.00L149.50,172.00L148.50,171.50L148.50,64.50Z"/>
+        </symbol>
+      </defs>
+      <rect width="1200" height="900" fill="none" stroke="#f4f4f4" stroke-opacity=".18" stroke-width="1"/>
+      <use href="#iso" x="60"  y="70"  width="202" height="172" opacity=".22"/>
+      <use href="#iso" x="300" y="20"  width="300" height="255"/>
+      <use href="#iso" x="640" y="90"  width="150" height="128" opacity=".55"/>
+      <use href="#iso" x="820" y="40"  width="240" height="204"/>
+      <use href="#iso" x="120" y="290" width="160" height="136" opacity=".35"/>
+      <use href="#iso" x="330" y="310" width="420" height="357" opacity=".9"/>
+      <use href="#iso" x="790" y="300" width="180" height="153" opacity=".45"/>
+      <use href="#iso" x="1000" y="330" width="120" height="102"/>
+      <use href="#iso" x="70"  y="600" width="260" height="221" opacity=".7"/>
+      <use href="#iso" x="370" y="690" width="130" height="111" opacity=".4"/>
+      <use href="#iso" x="540" y="610" width="320" height="272"/>
+      <use href="#iso" x="900" y="650" width="200" height="170" opacity=".3"/>
+      <line x1="0" y1="540" x2="1200" y2="540" stroke="#f4f4f4" stroke-opacity=".2"/>
+      <line x1="470" y1="0" x2="470" y2="900" stroke="#f4f4f4" stroke-opacity=".2"/>
+    </svg>
+  </div>
+
+  <p class="annotation">01 · cover bleed</p>
+  <a class="signature" href="#">MIDI</a>
+  <span class="coordinates">842 : 517</span>
+  <button class="motion" type="button" aria-label="Pausar movimiento">Ⅱ</button>
+
+  <div class="scene">
+    <h1>Archivo de formas</h1>
+    <p>exploraciones / identidad MIDI</p>
+  </div>
+
+  <span class="whisper">tocá una forma</span>
+  <nav class="map" aria-label="Escenas">
+    <a href="#" aria-label="Inicio"></a>
+    <a href="#" aria-label="Portafolio" aria-current="page"></a>
+    <a href="#" aria-label="Nosotros"></a>
+    <a href="#" aria-label="Contacto"></a>
+    <a href="#" aria-label="Exploraciones"></a>
+  </nav>
+  <button class="advance" type="button" aria-label="Siguiente composición">01 / 04 <span>↗</span></button>
+</main>
+</body>
+</html>
