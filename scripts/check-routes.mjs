@@ -22,6 +22,8 @@ const ROUTES = [
 ];
 
 const failures = [];
+const motionSource = await readFile(join('src', 'motion', 'motion.mjs'), 'utf8');
+const artworkRatio = extract(motionSource, /preserveAspectRatio="([^"]+)"/, 'generated artwork preserveAspectRatio');
 const titles = new Map();
 const headings = new Map();
 const galleryAlts = new Map();
@@ -91,6 +93,18 @@ for (const route of ROUTES) {
     assert.ok(hitRegions, `${where}: missing #hit-regions`);
     assert.match(hitRegions, /\brole="group"/i, `${where}: #hit-regions must have group role`);
     assert.match(hitRegions, /aria-label="[^"]+"/i, `${where}: #hit-regions must describe the interaction`);
+    const hitRatio = extract(hitRegions, /preserveAspectRatio="([^"]+)"/, '#hit-regions preserveAspectRatio');
+    assert.equal(hitRatio, artworkRatio, `${where}: hit-region preserveAspectRatio differs from generated artwork`);
+  });
+
+  expect('favicon links', () => {
+    for (const link of [
+      '<link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48">',
+      '<link rel="icon" href="/favicon.svg" type="image/svg+xml">',
+      '<link rel="apple-touch-icon" href="/apple-touch-icon.png">',
+      '<link rel="icon" href="/icon-192.png" sizes="192x192">',
+      '<link rel="icon" href="/icon-512.png" sizes="512x512">',
+    ]) assert.ok(html.includes(link), `${where}: missing ${link}`);
   });
 
   expect('title', () => {

@@ -241,3 +241,39 @@ specimen board. Three directions live in `design/midi-escena-fluida/`:
 `01-cover-bleed.html`, `02-fluid-composition.html`, `03-editorial-split.html`.
 They differ in structure, not colour. None is implemented yet; the unchosen
 two stay as alternatives.
+
+L12 (T8, identity alignment): the identity deck settles the direction question
+it was asked to settle. The deck decomposes the isotipo into rectangles and
+recomposes it at other scales, and those compositions bleed past the frame, so
+boxing the artwork in a 1200x900 canvas with letterbox was an identity
+violation rather than a taste question. Direction 03 (editorial split) is
+contradicted by the deck, which has no text columns: it has labels and
+compositions. The chosen change is therefore the bleed, not a redesign.
+
+Consequences recorded, not hidden:
+- The artwork wrapper and `#hit-regions` both use `xMidYMid slice`. They must
+  move together or the invisible click targets stop matching the drawing, so
+  `check-routes` now reads the value out of `src/motion/motion.mjs` and fails if
+  the two drift apart. That check is what makes this safe to change later.
+- Under the bleed, pieces cropped outside the frame are no longer clickable. On
+  a very tall or very wide viewport a scene could lose every clickable shape.
+  Navigation still exists through the HUD, the wheel and the advance button, but
+  the "tocá una forma" affordance can go dead on that scene. This needs a human
+  look at several aspect ratios; it cannot be proven without a browser.
+- The type change follows the deck's own large register (the deck's contact
+  line spans the page), not an invented display headline: scene title
+  `clamp(32px, 5.5vw, 96px)`, subtitle `clamp(13px, 1.2vw, 17px)`, HUD 11-12px.
+
+L13 (incident, mine, corrected): a `git add -A` while the T8 worker was running
+swept its in-progress edits into the brand-material commit, producing a commit
+whose message described none of its code. The branch was unpushed, so the
+commit was rewritten as two: the brand material and T8 separately. Recorded
+because the same mistake is available on every commit made while a worker runs:
+stage paths explicitly, never `-A`.
+
+L14 (review budget): the first native review attempt stopped with
+`lens_context_budget_exceeded` and created no authority. Cause was mine: the
+brand commit had versioned 71 paths, nearly all binary mirrors of twelve marks.
+The repository now versions the deck, the usage guide and the twelve vector
+sources, and ignores the print, PNG, WebP and favicon mirrors, which stay on
+disk. A candidate has to be readable by a reviewer to be reviewable.
