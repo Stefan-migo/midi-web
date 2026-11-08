@@ -101,7 +101,7 @@ cleanup task once the visual sign-off lands.
 | T1 | S2, S1 | Vite MPA scaffold, design tokens, `src/motion/` byte-identical move, root route entry | writer | `0267c7e` |
 | T2 | S4, S3 | `src/content/` data layer from the reference copy plus the abandoned Next components | writer | `0267c7e` |
 | T3 | S1, S2 | Remotion consumes `src/motion/`; the hand-maintained duplicates in `remotion/public/` are gone | parent | this commit |
-| T4 | S3, S1 | One prerendered HTML entry per route; HUD becomes real links; client router replays the transition | parent | — |
+| T4 | S3, S1 | One prerendered HTML entry per route; HUD becomes real links; client router replays the transition | parent | this commit |
 | T5 | S2 | SEO: per-route title/description, canonical, OG/Twitter, sitemap, robots | writer | — |
 | T6 | S2 | AEO: JSON-LD (Organization, CollectionPage, BreadcrumbList), semantic headings, `llms.txt` | writer | — |
 | T7 | S1, S3 | Defect pass: `00 / 03` vs `04` counter, dead `.split` CSS, orphan assets, hit regions derived from data, a11y (`aria-labelledby`, `inert`, real hit labels) | writer | — |
@@ -160,3 +160,19 @@ L7 (decisions and defects found during integration, none reported by a worker):
   byte- and hash-level.
 - Open, tracked by T7: the four gallery items share one identical `alt` string,
   so a screen reader user cannot tell them apart.
+
+L8 (T4, RED then GREEN): `scripts/check-routes.mjs` asserts structural invariants
+over the built documents — one file per route, unique title, non-empty
+description, unique heading, the right `data-scene`, exactly one `aria-current`
+on the route's own link, all five nav links present, no hash navigation, and
+the counter derived from the route count. It failed first: `contacto` shipped an
+empty description because `scene.body?.paragraphs.join(' ')` is `""` and `??`
+only falls through on null/undefined. Fixed with an explicit length check plus a
+word-boundary truncation. `npm run verify` is the gate: typecheck, build, check,
+exit 0.
+
+The route documents are generated from one shell by a `generateBundle` plugin,
+so there is no second copy of the markup to keep in sync, and a missing shell
+marker throws at build time instead of emitting a silently wrong page. In
+development a middleware maps the route paths onto the shell, so `/portafolio/`
+renders the same way it will in production.

@@ -1,5 +1,13 @@
 import { site } from './content/site';
 import type { Scene } from './content/types';
+import {
+  buildRoutes,
+  counterLabel,
+  normalizePath,
+  routeIndex,
+  withBase,
+  type RouteSpec,
+} from './lib/routes';
 import { placeLabels } from './motion/label-layout.mjs';
 import { playBetween, regions, renderPosition } from './motion/site-motion.mjs';
 
@@ -15,6 +23,10 @@ function must<T extends Element>(selector: string): T {
   return element;
 }
 
+const base = import.meta.env.BASE_URL;
+const routes: RouteSpec[] = buildRoutes(site);
+const scenes: Scene[] = routes.map((route) => route.scene);
+
 const world = must<HTMLElement>('#world');
 const composition = must<HTMLElement>('#composition');
 const pieces = must<SVGSVGElement>('#pieces');
@@ -27,10 +39,8 @@ const advanceButton = must<HTMLButtonElement>('#advance');
 const motionButton = must<HTMLButtonElement>('#motion');
 const closeButton = must<HTMLButtonElement>('#close');
 const coordinateNode = must<HTMLElement>('#coordinate');
+const whisperNode = must<HTMLElement>('#whisper');
 const reduced = matchMedia('(prefers-reduced-motion: reduce)');
-
-const scenes: Scene[] = [...site.scenes].sort((a, b) => a.order - b.order);
-const routes: string[] = scenes.map((scene) => scene.id);
 
 let sceneIndex = 0;
 let position = 0;
@@ -46,8 +56,30 @@ function currentScene(): Scene {
   return scene;
 }
 
-function routeAt(index: number): string {
-  return routes[index] ?? routes[0] ?? '';
+function routeAt(index: number): RouteSpec | undefined {
+  return routes[index];
+}
+
+function navigate(path: string): void {
+  const target = withBase(path, base);
+  if (normalizePath(location.pathname, base) === normalizePath(path, '/')) {
+    setScene();
+    return;
+  }
+  history.pushState(null, '', target);
+  setScene();
+}
+
+/**
+ * Old links use hash routes. Adopt the hash on first load so a shared
+ * `#portafolio` still lands on the real page instead of the home document.
+ */
+function adoptLegacyHash(): void {
+  const legacy = location.hash.replace(/^#/, '');
+  if (!legacy) return;
+  const id = legacy === 'contacto-final' ? 'exploraciones' : legacy;
+  const match = routes.find((route) => route.id === id);
+  if (match) history.replaceState(null, '', withBase(match.path, base));
 }
 
 function mountPieces(): void {
@@ -62,15 +94,19 @@ function mountPieces(): void {
       'aria-label',
       sceneIndex === 0
         ? `Desplegar universo MIDI, fragmento ${index + 1}`
-        : `Abrir ${routeAt(sceneIndex)}, fragmento ${index + 1}`,
+        : `Abrir ${routes[sceneIndex]?.scene.navLabel ?? ''}, fragmento ${index + 1}`,
     );
     const attributes = { x, y, width: right - x, height: bottom - y };
     for (const [key, value] of Object.entries(attributes)) {
       piece.setAttribute(key, String(value));
     }
     const activate = (): void => {
-      if (sceneIndex === 0) go(1);
-      else openContent(index);
+      const target = routeAt(sceneIndex === 0 ? 1 : sceneIndex);
+      if (sceneIndex === 0) {
+        if (target) navigate(target.path);
+      } else {
+        openContent(index);
+      }
     };
     piece.addEventListener('click', activate);
     piece.addEventListener('keydown', (event) => {
@@ -83,14 +119,8 @@ function mountPieces(): void {
   });
 }
 
-function go(index: number): void {
-  location.hash = routeAt(index);
-}
-
 function setScene(animate = true): void {
-  const requested = location.hash.slice(1);
-  const route = requested === 'contacto-final' ? 'exploraciones' : requested;
-  targetPosition = Math.max(0, routes.indexOf(route));
+  targetPosition = routeIndex(location.pathname, routes, base);
   sceneIndex = targetPosition;
   closeContent();
   stopPlayback?.();
@@ -98,7 +128,7 @@ function setScene(animate = true): void {
   const data = currentScene();
   titleNode.textContent = data.title;
   subtitleNode.textContent = data.subtitle;
-  advanceButton.innerHTML = `0${sceneIndex} / 04 <span>↗</span>`;
+  advanceButton.innerHTML = counterLabel(sceneIndex, routes.length);
   document.querySelectorAll('.scene-map a').forEach((link, index) => {
     if (index === sceneIndex) link.setAttribute('aria-current', 'page');
     else link.removeAttribute('aria-current');
@@ -185,11 +215,12 @@ function advance(direction: number): void {
   if (stopPlayback || !reveal.hidden) return;
   const next = targetPosition + direction;
   if (next < 0 || next >= routes.length) {
-    location.hash = routeAt((next + routes.length) % routes.length);
-    setScene(false);
-  } else {
-    go(next);
+    const wrapped = routes[(next + routes.length) % routes.length];
+    if (wrapped) navigate(wrapped.path);
+    return;
   }
+  const target = routeAt(next);
+  if (target) navigate(target.path);
 }
 
 advanceButton.onclick = () => advance(1);
@@ -249,6 +280,36 @@ composition.addEventListener('touchcancel', () => {
   touchOrigin = undefined;
 });
 
+/**
+ * Internal navigation is intercepted so the scene transition survives a page
+ * change. The document is a real URL either way: without JavaScript, the link
+ * loads the prerendered page.
+ */
+document.addEventListener('click', (event) => {
+  if (
+    event.defaultPrevented ||
+    event.button !== 0 ||
+    event.metaKey ||
+    event.ctrlKey ||
+    event.shiftKey ||
+    event.altKey
+  ) {
+    return;
+  }
+  const target = event.target;
+  if (!(target instanceof Element)) return;
+  const anchor = target.closest('a[href]');
+  if (!(anchor instanceof HTMLAnchorElement)) return;
+  if (anchor.target && anchor.target !== '_self') return;
+  const url = new URL(anchor.href, location.href);
+  if (url.origin !== location.origin) return;
+  const path = normalizePath(url.pathname, base);
+  const match = routes.find((route) => normalizePath(route.path, '/') === path);
+  if (!match) return;
+  event.preventDefault();
+  navigate(match.path);
+});
+
 document.addEventListener('keydown', (event) => {
   if (event.key === 'Escape') closeContent();
   if (!reveal.hidden && event.key === 'Tab') {
@@ -272,12 +333,14 @@ reduced.addEventListener('change', () => {
   if (paused && stopPlayback) setScene(false);
 });
 
-addEventListener('hashchange', () => setScene());
+addEventListener('popstate', () => setScene());
 addEventListener('resize', () => placeLabels(sceneIndex));
 
 document.fonts.ready.then(() => {
   if (!stopPlayback) placeLabels(sceneIndex);
 });
 
+if (site.hint) whisperNode.textContent = site.hint;
+adoptLegacyHash();
 syncMotionButton();
 setScene(false);
