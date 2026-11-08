@@ -3,7 +3,7 @@ import type { Plugin } from 'vite';
 import { site } from './src/content/site';
 import { buildRoutes } from './src/lib/routes';
 import { renderRouteHtml } from './src/lib/route-html';
-import { robotsTxt, sitemapXml } from './src/lib/seo';
+import { llmsTxt, robotsTxt, sitemapXml } from './src/lib/seo';
 
 /**
  * Canonical origin of the published site. Every generated absolute URL
@@ -42,6 +42,8 @@ function prerenderRoutes(base: string, siteUrl?: string): Plugin {
         });
       }
       this.emitFile({ type: 'asset', fileName: 'robots.txt', source: robotsTxt({ base, siteUrl }) });
+      const llms = llmsTxt(routes, site.name, { base, siteUrl });
+      if (llms !== undefined) this.emitFile({ type: 'asset', fileName: 'llms.txt', source: llms });
       const sitemap = sitemapXml(routes, { base, siteUrl });
       if (sitemap !== undefined) {
         this.emitFile({ type: 'asset', fileName: 'sitemap.xml', source: sitemap });

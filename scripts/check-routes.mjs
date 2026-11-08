@@ -14,11 +14,11 @@ import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 const ROUTES = [
-  { file: 'index.html', path: '/', order: 0 },
-  { file: 'portafolio/index.html', path: '/portafolio/', order: 1 },
-  { file: 'nosotros/index.html', path: '/nosotros/', order: 2 },
-  { file: 'contacto/index.html', path: '/contacto/', order: 3 },
-  { file: 'exploraciones/index.html', path: '/exploraciones/', order: 4 },
+  { file: 'index.html', path: '/', order: 0, type: 'WebPage' },
+  { file: 'portafolio/index.html', path: '/portafolio/', order: 1, type: 'CollectionPage' },
+  { file: 'nosotros/index.html', path: '/nosotros/', order: 2, type: 'AboutPage' },
+  { file: 'contacto/index.html', path: '/contacto/', order: 3, type: 'ContactPage' },
+  { file: 'exploraciones/index.html', path: '/exploraciones/', order: 4, type: 'CollectionPage' },
 ];
 
 const failures = [];
@@ -48,6 +48,31 @@ for (const route of ROUTES) {
       failures.push(`${where}: ${error.message}`);
     }
   };
+
+  expect('JSON-LD graph', () => {
+    const scripts = html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g) ?? [];
+    assert.equal(scripts.length, 1, `${where}: expected exactly one JSON-LD script`);
+    const data = JSON.parse(scripts[0].replace(/^<script[^>]*>|<\/script>$/g, ''));
+    const graph = data['@graph'];
+    assert.ok(graph.some((node) => node['@type'] === 'Organization'), `${where}: missing Organization`);
+    assert.ok(graph.some((node) => node['@type'] === 'WebSite'), `${where}: missing WebSite`);
+    assert.ok(graph.some((node) => node['@type'] === route.type), `${where}: expected page type ${route.type}`);
+    const canonical = extract(html, /rel="canonical" href="([^"]+)"/i, 'canonical');
+    const origin = new URL(canonical).origin;
+    for (const node of graph) {
+      if (typeof node['@id'] === 'string') assert.equal(new URL(node['@id']).origin, origin, `${where}: @id must use canonical origin`);
+      for (const item of node.itemListElement ?? []) assert.equal(new URL(item.item).origin, origin, `${where}: breadcrumb item must use canonical origin`);
+    }
+    const breadcrumb = graph.find((node) => node['@type'] === 'BreadcrumbList');
+    if (route.order === 0) assert.equal(breadcrumb, undefined, `${where}: home breadcrumb must be absent`);
+    else assert.deepEqual(breadcrumb.itemListElement.map((item) => item.position), [1, 2], `${where}: breadcrumb positions must be 1 and 2`);
+  });
+
+  expect('prerendered reveal body', () => {
+    const body = extract(html, /<div id="reveal-body">([\s\S]*?)<\/div>/i, '#reveal-body');
+    assert.match(body, /<h2 id="reveal-title">/i, `${where}: missing semantic reveal heading`);
+    if (route.path === '/nosotros/') assert.ok((body.match(/<p>/g) ?? []).length > 0, `${where}: expected paragraph in #reveal-body`);
+  });
 
   expect('title', () => {
     const title = extract(html, /<title>([\s\S]*?)<\/title>/i, '<title>').trim();
@@ -135,6 +160,17 @@ for (const route of ROUTES) {
     assert.equal(hashes.length, 0, `hash links still present: ${hashes.join(', ')}`);
   });
 }
+
+try {
+  const llms = await readFile(join('dist', 'llms.txt'), 'utf8');
+  assert.ok(llms.startsWith('# '), 'dist/llms.txt: expected # heading');
+  const lines = llms.split('\n').filter((line) => line.startsWith('- ['));
+  assert.equal(lines.length, ROUTES.length, `dist/llms.txt: expected one line per route`);
+  for (const line of lines) {
+    const match = line.match(/\]\((https?:\/\/[^)\s]+)\)/);
+    assert.ok(match, `dist/llms.txt: line has no absolute URL: ${line}`);
+  }
+} catch (error) { failures.push(`dist/llms.txt: ${error.message}`); }
 
 const robotsPath = join('dist', 'robots.txt');
 try {

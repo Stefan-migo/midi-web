@@ -56,6 +56,45 @@ function describe(scene: Scene, site: Site): string {
   return truncate(`${scene.title}. ${scene.subtitle}. ${site.name}, colectivo artístico.`, 160);
 }
 
+function revealMarkup(scene: Scene): string {
+  const gallery = scene.gallery?.[0];
+  const heading = gallery?.title ?? scene.body?.heading ?? scene.title;
+  const paragraphs = (scene.body?.paragraphs ?? []).map((text) => `<p>${escapeHtml(text)}</p>`).join('');
+  const links = (scene.body?.links ?? []).map((link) => `<a href="${escapeHtml(link.href)}">${escapeHtml(link.label)} ↗</a>`).join('');
+  const art = gallery
+    ? `<img id="art" src="${escapeHtml(gallery.src)}" alt="${escapeHtml(gallery.alt)}"><div class="work-switch"><button id="previous" aria-label="Pieza anterior">←</button><span id="work-index">01 / ${String(scene.gallery?.length ?? 0).padStart(2, '0')}</span><button id="next" aria-label="Pieza siguiente">→</button></div>`
+    : '';
+  return `<h2 id="reveal-title">${escapeHtml(heading)}</h2>${paragraphs}${links}${art}`;
+}
+
+function jsonLd(route: RouteSpec, routes: RouteSpec[], site: Site, options: SiteOptions, title: string, description: string): string {
+  const origin = options.siteUrl?.replace(/\/+$/, '');
+  if (!origin) return '';
+  const canonical = absoluteUrl(route.path, options)!;
+  const contact = site.scenes.find((item) => item.body?.links?.some((link) => link.href.startsWith('mailto:')));
+  const contactLinks = contact?.body?.links ?? [];
+  const organization: Record<string, unknown> = { '@type': 'Organization', '@id': `${origin}/#organization`, name: site.name, url: origin };
+  const email = contactLinks.find((link) => link.href.startsWith('mailto:'))?.href.slice(7);
+  const sameAs = contactLinks.filter((link) => link.kind === 'social').map((link) => link.href);
+  if (email) organization.email = email;
+  if (sameAs.length) organization.sameAs = sameAs;
+  const pageType = route.order === 0 ? 'WebPage' : route.scene.gallery ? 'CollectionPage' : contactLinks.some((link) => link.href.startsWith('mailto:') && route.scene.body?.links === contactLinks) ? 'ContactPage' : route.scene.body?.paragraphs.length ? 'AboutPage' : 'WebPage';
+  const webSiteId = `${origin}/#website`;
+  const graph: Record<string, unknown>[] = [
+    { '@type': 'WebSite', '@id': webSiteId, name: site.name, url: origin, inLanguage: 'es' },
+    organization,
+    { '@type': pageType, '@id': `${canonical}#webpage`, url: canonical, name: title, description, inLanguage: 'es', isPartOf: { '@id': webSiteId } },
+  ];
+  if (route.order !== 0) {
+    const home = routes[0]!;
+    graph.push({ '@type': 'BreadcrumbList', '@id': `${canonical}#breadcrumb`, itemListElement: [
+      { '@type': 'ListItem', position: 1, name: home.scene.navLabel, item: absoluteUrl(home.path, options) },
+      { '@type': 'ListItem', position: 2, name: route.scene.navLabel, item: canonical },
+    ] });
+  }
+  return `<script type="application/ld+json">${JSON.stringify({ '@context': 'https://schema.org', '@graph': graph }).replace(/</g, '\\u003c')}</script>`;
+}
+
 function navMarkup(routes: RouteSpec[], active: RouteSpec): string {
   const links = routes
     .map((route) => {
@@ -119,7 +158,7 @@ export function renderRouteHtml(
   html = replaceOnce(
     html,
     /<!--midi:seo-->/,
-    socialHead(route, site, title, description, options),
+    `${socialHead(route, site, title, description, options)}${jsonLd(route, routes, site, options, title, description)}`,
     'the social head marker',
   );
   html = replaceOnce(
@@ -134,6 +173,7 @@ export function renderRouteHtml(
     navMarkup(routes, route),
     'the scene nav',
   );
+  html = replaceInner(html, 'reveal-body', revealMarkup(scene));
   html = replaceInner(html, 'scene-title', escapeHtml(scene.title));
   html = replaceInner(html, 'scene-subtitle', escapeHtml(scene.subtitle));
   html = replaceInner(html, 'advance', counterLabel(scene.order, routes.length));

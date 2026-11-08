@@ -103,7 +103,7 @@ cleanup task once the visual sign-off lands.
 | T3 | S1, S2 | Remotion consumes `src/motion/`; the hand-maintained duplicates in `remotion/public/` are gone | parent | this commit |
 | T4 | S3, S1 | One prerendered HTML entry per route; HUD becomes real links; client router replays the transition | parent | this commit |
 | T5 | S2 | SEO: per-route title/description, canonical, OG/Twitter, sitemap, robots | writer | this commit |
-| T6 | S2 | AEO: JSON-LD (Organization, CollectionPage, BreadcrumbList), semantic headings, `llms.txt` | writer | — |
+| T6 | S2 | AEO: JSON-LD (Organization, CollectionPage, BreadcrumbList), semantic headings, `llms.txt` | writer | this commit |
 | T7 | S1, S3 | Defect pass: `00 / 03` vs `04` counter, dead `.split` CSS, orphan assets, hit regions derived from data, a11y (`aria-labelledby`, `inert`, real hit labels) | writer | — |
 | T8 | S1, S3 | Design polish pass after parity is verified; needs a design brief (gentle-design) | parent | — |
 
@@ -187,3 +187,26 @@ origin fails the build check instead of silently dropping them.
 The domain came from the owner as "probably" `midi4all.art`. It matches the
 `midi4all` handle already used on Instagram and TikTok. It is one constant to
 change if it moves.
+
+L10 (T6, RED then GREEN): the body copy was the real gap — it lived only in
+`src/content/` and was injected when the dialog opened, so an answer engine saw
+a heading and nothing else. The prerendered documents now carry it inside
+`#reveal-body` as `<h2>`/`<p>`/`<a>`/`<img>`, with every value escaped. Verified
+on the built output: `/nosotros/` ships 3 `<p>`, gallery routes ship their first
+`<img>`, `/contacto/` ships its links.
+
+JSON-LD is one `@graph` per document: `WebSite`, `Organization` (email and
+`sameAs` taken from the contact links, not invented), the route's own page node
+and a `BreadcrumbList`. Page types derive from the data rather than the path:
+`CollectionPage` when the scene has a gallery, `AboutPage` when it has
+paragraphs, `ContactPage` when its links include a `mailto:`, plain `WebPage`
+otherwise. The home route has no breadcrumb, because a one-item breadcrumb is
+noise. Each node's `@id` is absolute and cross-referenced.
+
+Two defects the first pass shipped and the gate caught: `llms.txt` was written
+with `lines.join('\\n')`, a literal backslash-n, so the whole file was one line;
+and its summary concatenated every scene's body into a run-on paragraph. Now it
+uses only the collective's own paragraphs, capped on a word boundary.
+
+Known, not blocking: gallery routes prerender only the first image. Listing all
+four would be better for AEO and is a one-line change when it matters.
