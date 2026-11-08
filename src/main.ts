@@ -8,7 +8,7 @@ import {
   withBase,
   type RouteSpec,
 } from './lib/routes';
-import { pieceLabel } from './content/portfolio';
+import { pieceData, pieceLabel } from './content/portfolio';
 import { pieces as pieceTable } from './motion/transition.mjs';
 import { placeLabels } from './motion/label-layout.mjs';
 import { playBetween, regions, renderPosition, transitionDurationMs } from './motion/site-motion.mjs';
@@ -34,6 +34,7 @@ const composition = must<HTMLElement>('#composition');
 const pieces = must<SVGSVGElement>('#pieces');
 const art = must<HTMLElement>('#motion-art');
 const reveal = must<HTMLElement>('#reveal');
+const cards = must<HTMLElement>('#piece-cards');
 const revealBody = must<HTMLElement>('#reveal-body');
 const titleNode = must<HTMLElement>('#scene-title');
 const subtitleNode = must<HTMLElement>('#scene-subtitle');
@@ -104,6 +105,7 @@ function adoptLegacyHash(): void {
 
 function mountPieces(): void {
   pieces.replaceChildren();
+  cards.replaceChildren();
   const boxes = (regions[targetPosition] ?? []) as Box[];
   boxes.forEach(([x, y, right, bottom], index) => {
     // The name comes from the motion engine's own piece table, so the component
@@ -136,6 +138,38 @@ function mountPieces(): void {
       geometry.setAttribute(key, String(value));
     }
 
+    // The flip card is a real HTML layer: a 3D flip inside the SVG is not
+    // reliable, and a DOM card gives crisp text and `object-fit: cover`.
+    const data = pieceData(name);
+    const card = document.createElement('div');
+    card.className = 'piece-card';
+    card.dataset['card'] = name;
+    const front = document.createElement('div');
+    front.className = 'face face--front';
+    const back = document.createElement('div');
+    back.className = 'face face--back';
+    if (data?.image) {
+      const image = document.createElement('img');
+      image.src = data.image;
+      image.alt = data.imageAlt ?? '';
+      image.loading = 'lazy';
+      back.append(image);
+    }
+    const scrim = document.createElement('span');
+    scrim.className = 'scrim';
+    const text = document.createElement('span');
+    text.className = 'card-text';
+    const cardTitle = document.createElement('span');
+    cardTitle.className = 'card-title';
+    cardTitle.textContent = data?.title ?? 'TODO: título';
+    const cardSubtitle = document.createElement('span');
+    cardSubtitle.className = 'card-subtitle';
+    cardSubtitle.textContent = data?.subtitle ?? '';
+    text.append(cardTitle, cardSubtitle);
+    back.append(scrim, text);
+    card.append(front, back);
+    cards.append(card);
+
     const activate = (): void => {
       const target = routeAt(sceneIndex === 0 ? 1 : sceneIndex);
       if (sceneIndex === 0) {
@@ -146,9 +180,11 @@ function mountPieces(): void {
     };
     const showLabel = (): void => {
       whisperNode.textContent = pieceLabel(name);
+      card.classList.add('is-flipped');
     };
     const clearLabel = (): void => {
       whisperNode.textContent = site.hint ?? '';
+      card.classList.remove('is-flipped');
     };
     piece.addEventListener('pointerenter', showLabel);
     piece.addEventListener('pointerleave', clearLabel);
@@ -164,6 +200,28 @@ function mountPieces(): void {
     group.append(geometry, piece);
     pieces.append(group);
   });
+  layoutCards();
+}
+
+/**
+ * Anchors each flip card to its piece. Thin pieces would give an unreadable
+ * card, so it gets a floor and is centred on its piece.
+ */
+function layoutCards(): void {
+  const origin = composition.getBoundingClientRect();
+  for (const group of pieces.querySelectorAll<SVGGElement>('.piece-group')) {
+    const name = group.dataset['piece'];
+    const hit = group.querySelector<SVGRectElement>('.hit');
+    const card = name ? cards.querySelector<HTMLElement>(`[data-card="${name}"]`) : null;
+    if (!hit || !card) continue;
+    const rect = hit.getBoundingClientRect();
+    const width = Math.max(rect.width, 132);
+    const height = Math.max(rect.height, 104);
+    card.style.width = `${width}px`;
+    card.style.height = `${height}px`;
+    card.style.left = `${rect.left - origin.left + (rect.width - width) / 2}px`;
+    card.style.top = `${rect.top - origin.top + (rect.height - height) / 2}px`;
+  }
 }
 
 function setScene(animate = true): void {
@@ -439,7 +497,10 @@ reduced.addEventListener('change', () => {
 });
 
 addEventListener('popstate', () => setScene());
-addEventListener('resize', () => placeLabels(sceneIndex));
+addEventListener('resize', () => {
+  placeLabels(sceneIndex);
+  layoutCards();
+});
 
 document.fonts.ready.then(() => {
   if (!cancelTransition) placeLabels(sceneIndex);
