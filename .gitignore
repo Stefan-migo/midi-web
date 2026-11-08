@@ -11,3 +11,14 @@ MIDI/
 
 # Build
 dist/
+
+# Material de marca: se versiona el manual, la guia de uso y los SVG.
+# Los espejos de formato (impresion, PNG, WebP, favicons) son regenerables
+# desde el vector y no son revisables como codigo. Los favicons web ya viven
+# en public/. Los archivos siguen en disco.
+Docs/MIDI - Pack de logos/Impresion/
+Docs/MIDI - Pack de logos/Originales/
+Docs/MIDI - Pack de logos/Web/PNG/
+Docs/MIDI - Pack de logos/Web/WebP/
+Docs/MIDI - Pack de logos/Web/Favicon/
+Docs/MIDI - Pack de logos/Vista previa.jpg
