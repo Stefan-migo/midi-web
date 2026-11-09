@@ -151,6 +151,9 @@ function mountPieces(): void {
   // One card covers several pieces, so a counter keeps it flipped while the
   // pointer travels between the pieces of the same group.
   const openCount = new Map<string, number>();
+  // A card can span several pieces. Lighting the whole group is what makes it
+  // read as one work instead of loose blocks reacting separately.
+  const groupsByCard = new Map<string, SVGGElement[]>();
   const revealCard = (id: string): void => {
     const card = cardElements.get(id);
     if (!card) return;
@@ -164,13 +167,16 @@ function mountPieces(): void {
       delete image.dataset['src'];
     }
     card.classList.add('is-flipped');
+    for (const group of groupsByCard.get(id) ?? []) group.classList.add('is-active');
   };
   const concealCard = (id: string): void => {
     const card = cardElements.get(id);
     if (!card) return;
     const next = Math.max(0, (openCount.get(id) ?? 1) - 1);
     openCount.set(id, next);
-    if (next === 0) card.classList.remove('is-flipped');
+    if (next > 0) return;
+    card.classList.remove('is-flipped');
+    for (const group of groupsByCard.get(id) ?? []) group.classList.remove('is-active');
   };
 
   const boxes = (regions[targetPosition] ?? []) as Box[];
@@ -186,6 +192,11 @@ function mountPieces(): void {
     const group = document.createElementNS(pieces.namespaceURI, 'g') as SVGGElement;
     group.setAttribute('class', locked ? 'piece-group is-locked' : 'piece-group');
     group.setAttribute('data-piece', name);
+    if (definition) {
+      const members = groupsByCard.get(definition.id) ?? [];
+      members.push(group);
+      groupsByCard.set(definition.id, members);
+    }
 
     // Visual layer: invisible at rest, so the resting artwork is never touched.
     const geometry = document.createElementNS(pieces.namespaceURI, 'rect') as SVGRectElement;
