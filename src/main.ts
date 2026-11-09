@@ -189,8 +189,15 @@ function mountPieces(): void {
     const locked = sceneIndex === 1 && lockedPieces.has(name);
     const definition = sceneIndex === 1 && !locked ? cardForPiece(name) : undefined;
 
+    // The hit boxes are crop boxes, not tight outlines of the visible shape, so a
+    // fixed 12px rim and a 3% growth are fine on the thick blocks of the M and far
+    // too much on a thin bar. The group class decides how loud the highlight is.
+    const single = definition !== undefined && definition.pieces.length === 1;
+    const classes = ['piece-group'];
+    if (locked) classes.push('is-locked');
+    else if (single) classes.push('is-single');
     const group = document.createElementNS(pieces.namespaceURI, 'g') as SVGGElement;
-    group.setAttribute('class', locked ? 'piece-group is-locked' : 'piece-group');
+    group.setAttribute('class', classes.join(' '));
     group.setAttribute('data-piece', name);
     if (definition) {
       const members = groupsByCard.get(definition.id) ?? [];
