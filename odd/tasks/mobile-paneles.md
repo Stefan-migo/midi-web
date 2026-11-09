@@ -20,6 +20,10 @@ texto se pone por sobre la imagen. Está difícil porque es poco el espacio. Hay
 que rediseñar, optimizando ese modal para que funcione en modo celular. Si es
 necesario que se abra en pantalla completa, está perfecto."
 
+S4. In the user's words: "ok el modal para mobile en pantalla completa se ve
+genial. asegurate de que todos los modales de portafolio tambien se abra en
+pantalla completa"
+
 S3. Heritage: only the phone layout changes; the desktop archive, the desktop
 about panel and every other route keep their current geometry. Identity only
 (#f4f4f4 / #111111, mono, rectangles, no radii); every piece stays reachable by
@@ -31,6 +35,7 @@ Tab and opens with Enter or Space; `prefers-reduced-motion` keeps working.
 | --- | --- | --- | --- | --- |
 | T1 | S1, S3 | A touch opens the archive work on that same touch; the mouse and the keyboard keep using `click`; a swipe or a drag never activates | inline | 9d2957c |
 | T2 | S2, S3 | The about panel becomes a full-screen reading surface on phones: sticky header with the close button, horizontal scene rail, scene stacked as image then copy | inline | eec5876 |
+| T4 | S4 | The archive work panel is the same full-screen reading surface on phones: viewport-sized panel, sticky header with the ×, its own navigation at the bottom | inline | — |
 | T3 | S1, S2, S3 | Phone bench at 390x844 (one tap opens, a swipe does not, the panel fits, image and copy never intersect) plus a desktop readback | inline | — |
 
 ## Log
@@ -123,3 +128,20 @@ is aligned to the header's right edge, the kicker takes the free space, a click
 inside keeps the panel open, a rail chip switches scene without closing the
 panel, and a click outside closes it — at 1440x900 and on the phone. 27 asserts,
 0 failures. `npm run verify` green.
+
+L12 (user, verbatim): "ok el modal para mobile en pantalla completa se ve genial.
+asegurate de que todos los modales de portafolio tambien se abra en pantalla
+completa"
+
+L13 (decision, S4): the archive shares the shell with the about panel, so it gets
+the same treatment below 760px: `inset: 0`, no border and no outline, the padding
+moves to `#reveal-body` so the header can be a full-bleed sticky bar, and the ×
+grows to a 44px target. The block is scoped with `#reveal:has(.work-header)` so
+it never reaches the about panel or the plain gallery routes.
+
+L14 (evidence, T4): 390x844 — the work panel measures 0,0,390x844 with a 0px
+border, the header is a 390-wide sticky bar at y=0, the × is 44x44 at the right
+edge, the document has no horizontal overflow, a long work scrolls inside the
+panel (1247 against 844) and keeps its own navigation at the bottom; the × still
+closes it after scrolling. The whole bench is 33 asserts, 0 failures, plus the
+size sweep (360x640, 430x932, reduced motion). `npm run verify` green.
