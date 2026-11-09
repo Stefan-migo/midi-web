@@ -93,3 +93,33 @@ never a reason to review this candidate again. An independent verifier
 its model provider was unavailable. No verdict exists for it, it is not retried
 or escalated, and the proof of this change stays the bench in L6 plus
 `npm run verify`, both run by the writer.
+
+L8 (user, verbatim): "OK, en la versión escritorio de nosotros, cuando se abre el
+modal, la X, la X para cerrar el modal debe estar alineada a la derecha. Aligned
+right. También es importante que si se clica, se hace clic fuera del modal también
+este se cierre. Que tenga dos formas de cerrarse, ya sea cliqueando fuera o bien
+haciéndole clic a la cruz para cerrar, que ahora tiene que estar a la derecha.
+Está bien en header, en la parte de arriba del modal, pero hacia la derecha.
+agrega este fix. luego de eso push pr y merge"
+
+L9 (diagnosis, the ×): the close button was already the header's last flex item,
+but `.about-kicker` is a `p` and `#reveal p` caps paragraphs at 48ch, so the
+kicker stopped growing at 374px and the free space fell *after* the close button:
+the × sat at x=670 in a header 1046px wide. Now the kicker takes the row
+(`max-width: none`) and the close button closes it with `margin-left: auto`
+(`closeRight 1249` against `headerRight 1243`).
+
+L10 (diagnosis and decision, dismissal): the panel gains a second door — a click
+on the artwork around it closes it, exactly like the ×. Two guards keep it from
+firing on the wrong click: the click synthesized by the gesture that opened the
+panel (350 ms grace) and keyboard-activated clicks (`detail === 0`). The
+containment test measures the panel's box instead of walking the event target,
+because a click on a rail chip re-renders the panel and removes its own target
+from the document: `reveal.contains(target)` read as "outside" and the panel
+closed on itself. Caught by the bench, not in production.
+
+L11 (evidence): the phone bench grew three assertions and one desktop one: the ×
+is aligned to the header's right edge, the kicker takes the free space, a click
+inside keeps the panel open, a rail chip switches scene without closing the
+panel, and a click outside closes it — at 1440x900 and on the phone. 27 asserts,
+0 failures. `npm run verify` green.

@@ -53,6 +53,9 @@ const narrowViewport = matchMedia('(max-width: 650px)');
 const TOUCH_SLOP_PX = 12;
 /** The `click` synthesized by a tap arrives well inside this window. */
 const TOUCH_CLICK_WINDOW_MS = 700;
+/** A click right after opening is the tail of the opening gesture, not a dismissal. */
+const OUTSIDE_CLICK_GRACE_MS = 350;
+let panelOpenedAt = -Infinity;
 
 // Locked pieces are highlighted by their own silhouette, not by their crop box:
 // the box is a partition of the artwork, so filling it would read as a frame.
@@ -744,6 +747,7 @@ function openContent(index: number, work?: ArchiveCard, opener?: SVGRectElement,
   }
   if (!work && !about) reveal.append(closeButton);
   reveal.hidden = false;
+  panelOpenedAt = performance.now();
   if ((work || about) && opener) animateArchiveOpen(opener.getBoundingClientRect());
   else {
     reveal.classList.remove('archive-motion', 'archive-opening', 'archive-closing', 'archive-reduced');
@@ -794,6 +798,26 @@ function closeContent(animate = true): void {
 }
 
 closeButton.onclick = () => closeContent();
+
+/**
+ * A second way out: a click on the artwork around the panel closes it. The
+ * panel's siblings are `inert` while it is open, so that click lands on the
+ * world behind them, never on a piece. The click synthesized by the gesture
+ * that just opened the panel is not a dismissal; it is ignored.
+ */
+document.addEventListener('click', (event) => {
+  if (reveal.hidden) return;
+  if (performance.now() - panelOpenedAt < OUTSIDE_CLICK_GRACE_MS) return;
+  // Keyboard-activated clicks carry no coordinates and are never dismissals.
+  if (event.detail === 0) return;
+  // Measured, not looked up by target: a click that re-renders the panel (a rail
+  // chip) removes its own target from the document, so `reveal.contains(target)`
+  // would read as outside and the panel would close on itself.
+  const box = reveal.getBoundingClientRect();
+  const inside = event.clientX >= box.left && event.clientX <= box.right && event.clientY >= box.top && event.clientY <= box.bottom;
+  if (inside) return;
+  closeContent();
+});
 
 /**
  * Runs the transition to `targetPosition`. One place owns the in-flight state,
