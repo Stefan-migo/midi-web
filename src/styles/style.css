@@ -39,6 +39,10 @@
 #hit-regions .piece-group:focus-within .geometry { fill-opacity: .23; stroke-width: 12; }
 [data-scene="0"] #hit-regions .piece-group:hover .geometry,
 [data-scene="0"] #hit-regions .piece-group:focus-within .geometry { stroke-width: 0; fill-opacity: 1; }
+/* Locked pieces answer with a slight growth only: no card, no flip. */
+#hit-regions .piece-group.is-locked .geometry { transition: fill-opacity .3s, stroke-width .3s, transform .3s; transform-box: fill-box; transform-origin: center; }
+#hit-regions .piece-group.is-locked:hover .geometry,
+#hit-regions .piece-group.is-locked:focus-within .geometry { fill-opacity: .14; stroke-width: 2; transform: scale(1.03); }
 @media (prefers-reduced-motion: reduce) { #hit-regions .geometry { transition: none; } }
 
 .signature { width: 160px; height: auto; line-height: 0; letter-spacing: normal; }

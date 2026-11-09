@@ -1,24 +1,22 @@
 /**
- * The ten pieces of the archive, keyed by the names the motion engine already
- * uses (`src/motion/transition.mjs`).
+ * The archive is published as five cards over ten pieces. Cards combine pieces
+ * because ten separate works would be noise, and two pieces stay locked: they
+ * answer with a subtle scale under the pointer and never flip.
  *
- * TODO(T-portafolio): the remaining nine pieces still need real titles. The
+ * Piece names come from `src/motion/transition.mjs`; the grouping follows the
+ * owner's annotations over the running page.
+ *
+ * TODO(T-portafolio): four of the five titles are still placeholders. The
  * MIDI4all entry comes from the presentation sheet the owner supplied:
  * "MIDI4all", proyecto artístico audiovisual del colectivo MIDILab, presentado
  * en 990 Arte Club, Córdoba, Argentina.
- *
- * To add a real card, drop the image in `public/assets/portafolio/` and fill in
- * `title`, `subtitle` and `image` for that piece. Nothing else needs to change.
  */
 
-export interface ArchivePiece {
-  /** Must match a `name` in the motion engine's piece table. */
+export interface ArchiveCard {
   id: string;
-  /** Shown in the HUD on hover and used as the accessible name. */
-  label: string;
-  /** Card heading. */
+  /** Piece names this card covers. One entry or several. */
+  pieces: string[];
   title: string;
-  /** Card line under the heading. */
   subtitle: string;
   /** Site-root-relative path, e.g. `assets/portafolio/obra-01.jpg`. */
   image?: string;
@@ -26,10 +24,13 @@ export interface ArchivePiece {
   imageAlt?: string;
 }
 
-export const archivePieces: ArchivePiece[] = [
+/** Pieces with no card: they only grow slightly under the pointer. */
+export const lockedPieces = new Set(['solid-cap', 'solid-dot']);
+
+export const archiveCards: ArchiveCard[] = [
   {
-    id: 'solid-cap',
-    label: 'MIDI4all',
+    id: 'card-1',
+    pieces: ['solid-left', 'solid-right'],
     title: 'MIDI4all',
     subtitle: '990 Arte Club · Córdoba',
     image: 'assets/portafolio/midi4all/_DSC5779-web.jpg',
@@ -37,67 +38,37 @@ export const archivePieces: ArchivePiece[] = [
       'Presentación de MIDI4all en 990 Arte Club: dos personas frente a laptops y controladores sobre el escenario, con luz azul y una proyección del isotipo MIDI.',
   },
   {
-    id: 'solid-left',
-    label: 'TODO: obra de solid-left',
+    id: 'card-2',
+    pieces: ['solid-stem'],
     title: 'TODO: título',
     subtitle: 'TODO: subtítulo',
   },
   {
-    id: 'solid-right',
-    label: 'TODO: obra de solid-right',
+    id: 'card-3',
+    pieces: ['outline-dot'],
     title: 'TODO: título',
     subtitle: 'TODO: subtítulo',
   },
   {
-    id: 'solid-dot',
-    label: 'TODO: obra de solid-dot',
+    id: 'card-4',
+    pieces: ['outline-stem'],
     title: 'TODO: título',
     subtitle: 'TODO: subtítulo',
   },
   {
-    id: 'solid-stem',
-    label: 'TODO: obra de solid-stem',
-    title: 'TODO: título',
-    subtitle: 'TODO: subtítulo',
-  },
-  {
-    id: 'outline-cap',
-    label: 'TODO: obra de outline-cap',
-    title: 'TODO: título',
-    subtitle: 'TODO: subtítulo',
-  },
-  {
-    id: 'outline-left',
-    label: 'TODO: obra de outline-left',
-    title: 'TODO: título',
-    subtitle: 'TODO: subtítulo',
-  },
-  {
-    id: 'outline-right',
-    label: 'TODO: obra de outline-right',
-    title: 'TODO: título',
-    subtitle: 'TODO: subtítulo',
-  },
-  {
-    id: 'outline-dot',
-    label: 'TODO: obra de outline-dot',
-    title: 'TODO: título',
-    subtitle: 'TODO: subtítulo',
-  },
-  {
-    id: 'outline-stem',
-    label: 'TODO: obra de outline-stem',
+    id: 'card-5',
+    pieces: ['outline-cap', 'outline-left', 'outline-right'],
     title: 'TODO: título',
     subtitle: 'TODO: subtítulo',
   },
 ];
 
-/** Full card data for a piece id, or undefined when the id is unknown. */
-export function pieceData(id: string): ArchivePiece | undefined {
-  return archivePieces.find((piece) => piece.id === id);
+/** The card a piece belongs to, if it has one. */
+export function cardForPiece(piece: string): ArchiveCard | undefined {
+  return archiveCards.find((card) => card.pieces.includes(piece));
 }
 
-/** Label for a piece id, falling back to the id so a mismatch is visible. */
-export function pieceLabel(id: string): string {
-  return pieceData(id)?.label ?? id;
+/** Label for a piece: its card title when it belongs to one. */
+export function pieceLabel(piece: string): string {
+  return cardForPiece(piece)?.title ?? 'TODO: pieza';
 }
