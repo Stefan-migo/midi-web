@@ -1,5 +1,6 @@
 import { site } from './content/site';
 import { aboutScenes } from './content/about';
+import { midiHub } from './content/midi-links';
 import type { Scene } from './content/types';
 import {
   buildRoutes,
@@ -10,6 +11,7 @@ import {
   type RouteSpec,
 } from './lib/routes';
 import { archiveCards, cardForPiece, isLockedPiece, lockedPieces, pieceLabel, type ArchiveCard } from './content/portfolio';
+import { renderMidiHub } from './links/hub';
 import { pieces as pieceTable, silhouetteMasks } from './motion/transition.mjs';
 import { placeLabels } from './motion/label-layout.mjs';
 import { playBetween, regions, renderPosition, transitionDurationMs } from './motion/site-motion.mjs';
@@ -372,13 +374,17 @@ function mountPieces(): void {
     piece.setAttribute('role', 'button');
     piece.setAttribute('tabindex', '0');
     const targetLabel = sceneIndex === 0 ? routes[1]?.scene.navLabel : routes[sceneIndex]?.scene.navLabel;
+    // The contact scene has one panel behind all of its blocks: the link hub.
+    const contactBlock = sceneIndex === 3;
     piece.setAttribute(
       'aria-label',
       sceneIndex === 0
         ? `Abrir ${targetLabel ?? 'contenido'}, fragmento ${index + 1}`
         : definition
           ? `${definition.name}. Abrir la obra`
-          : pieceLabel(name),
+          : contactBlock
+            ? `${targetLabel ?? 'Contacto'}. Abrir los enlaces`
+            : pieceLabel(name),
     );
 
     const attributes = { x, y, width: right - x, height: bottom - y };
@@ -393,13 +399,15 @@ function mountPieces(): void {
       if (sceneIndex === 0) {
         if (target) navigate(target.path);
       } else if (sceneIndex === 2) {
-        openContent(index, undefined, piece, true);
+        openContent(index, undefined, piece, 'about');
       } else if (definition) {
         openContent(index, definition, piece);
+      } else if (contactBlock) {
+        openContent(index, undefined, piece, 'contact');
       }
     };
     const showLabel = (): void => {
-      whisperNode.textContent = definition?.name ?? pieceLabel(name, narrowViewport.matches);
+      whisperNode.textContent = definition?.name ?? (contactBlock ? 'Abrir los enlaces' : pieceLabel(name, narrowViewport.matches));
       if (definition && !(narrowViewport.matches && name === 'solid-dot')) revealCard(definition.id);
     };
     const clearLabel = (): void => {
@@ -711,19 +719,45 @@ function renderAboutScene(index: number, announce = false): void {
   reveal.setAttribute('aria-labelledby', 'reveal-title');
 }
 
-function openContent(index: number, work?: ArchiveCard, opener?: SVGRectElement, about = false): void {
+/**
+ * The panel every block of the contact scene opens: the same hub the hidden
+ * `/midi-links/` page mounts, on the paper surface. The × belongs to the panel
+ * chrome, so it moves into the hub instead of floating out of its flow.
+ */
+function renderContactHub(): void {
+  const hub = renderMidiHub({
+    surface: 'paper',
+    kicker: midiHub.panelKicker,
+    headingId: 'reveal-title',
+  });
+  hub.prepend(closeButton);
+  revealBody.replaceChildren(hub);
+  reveal.scrollTop = 0;
+  reveal.setAttribute('aria-labelledby', 'reveal-title');
+}
+
+/**
+ * `panel` selects a renderer that owns its own chrome (a header with the ×) and
+ * its own opening gesture. The archive, the about carousel and the contact hub
+ * are the three; a plain work card has none.
+ */
+type PanelMode = 'about' | 'contact';
+
+function openContent(index: number, work?: ArchiveCard, opener?: SVGRectElement, panel?: PanelMode): void {
   returnFocus = opener ?? (
     document.activeElement instanceof HTMLElement || document.activeElement instanceof SVGElement
       ? document.activeElement
       : undefined
   );
   selected = index % 4;
-  aboutPanelOpen = about;
+  aboutPanelOpen = panel === 'about';
   const data = currentScene();
-  if (about) {
+  if (panel === 'about') {
     // Each block of the scene opens a different chapter, so the panel does not
     // always start on the same page.
     renderAboutScene(index % aboutScenes.length);
+  } else if (panel === 'contact') {
+    renderContactHub();
   } else if (work) {
     renderArchiveWork(work);
   } else if (data.gallery?.length) {
@@ -752,10 +786,10 @@ function openContent(index: number, work?: ArchiveCard, opener?: SVGRectElement,
   for (const sibling of [...world.children]) {
     if (sibling !== reveal) (sibling as HTMLElement).inert = true;
   }
-  if (!work && !about) reveal.append(closeButton);
+  if (!work && !panel) reveal.append(closeButton);
   reveal.hidden = false;
   panelOpenedAt = performance.now();
-  if ((work || about) && opener) animateArchiveOpen(opener.getBoundingClientRect());
+  if ((work || panel) && opener) animateArchiveOpen(opener.getBoundingClientRect());
   else {
     reveal.classList.remove('archive-motion', 'archive-opening', 'archive-closing', 'archive-reduced');
     clearArchiveEdges();

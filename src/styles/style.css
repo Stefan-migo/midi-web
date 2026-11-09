@@ -249,3 +249,29 @@
 @media (prefers-reduced-motion: reduce) {
   .about-scene { animation: none !important; opacity: 1; transform: none; }
 }
+
+/* Contacto: el panel es el mismo hub de enlaces que monta /midi-links/
+   (src/styles/hub.css). Las reglas genéricas de texto del panel —h2, p, a— se
+   escribieron para copy de una columna y, por especificidad, le ganarían al
+   componente; se reafirman acá, igual que se hace con .about-*. */
+#reveal:has(.midi-hub) { inset: 12% 24%; padding: 3% 4%; }
+#reveal-body:has(.midi-hub) { display: block; height: 100%; min-height: 0; }
+#reveal .midi-hub { height: 100%; }
+#reveal .midi-hub-title { margin: 24px 0 0; font: 400 clamp(30px, 3.6vw, 42px)/1 "Roboto Mono", monospace; letter-spacing: .04em; }
+#reveal .midi-hub-subtitle { margin: 12px 0 0; max-width: none; font-size: 11px; line-height: 1.6; letter-spacing: .16em; text-transform: uppercase; opacity: .8; }
+#reveal .midi-hub-kicker { max-width: none; font-size: 10px; line-height: 1.5; letter-spacing: .16em; }
+#reveal .midi-hub a { margin: 0; font-size: inherit; text-decoration: none; }
+#reveal .midi-hub-icons a { display: grid; }
+/* The card outranks the icon rule: `#reveal a` and the generic hub anchor
+   reset would otherwise turn it into a two-row grid. */
+#reveal .midi-hub a.midi-hub-card { display: flex; gap: 14px; font-size: 13px; }
+/* The hub is the panel's own header: the × sits on its top-right corner instead
+   of the generic static position the archive and about headers give it. */
+#reveal .midi-hub > #close { position: absolute; top: -2px; right: -2px; margin: 0; padding: 0 4px; min-width: 44px; min-height: 44px; font-size: 40px; line-height: 1; color: var(--ink); }
+@media (max-width: 760px) {
+  #reveal:has(.midi-hub) { inset: 0; border-width: 0; outline: none; padding: 0; }
+  #reveal-body:has(.midi-hub) { height: auto; }
+  #reveal .midi-hub { height: auto; min-height: 100svh; padding: calc(env(safe-area-inset-top, 0px) + 64px) 20px calc(env(safe-area-inset-bottom, 0px) + 28px); }
+  #reveal .midi-hub-kicker { top: calc(env(safe-area-inset-top, 0px) + 24px); left: 20px; }
+  #reveal .midi-hub > #close { top: calc(env(safe-area-inset-top, 0px) + 4px); right: 6px; }
+}

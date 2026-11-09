@@ -26,6 +26,10 @@ for (const [display, relative] of documents) {
 }
 const add = content.get('midi-links/add/index.html');
 if (add && !add.includes('Esta página no guarda nada.')) await fail(documents[1][0], 'missing the explicit no-save sentence');
+// The page renders the shared contact hub at runtime: the shell only has to
+// carry its mount point, like every other document carries #reveal-body.
+const hub = content.get('midi-links/index.html');
+if (hub && !/id="hub"/.test(hub)) await fail(documents[0][0], 'missing the #hub mount the shared contact hub renders into');
 for (const relative of ['sitemap.xml', 'llms.txt']) {
   const file = `dist/${relative}`;
   try {
