@@ -88,3 +88,46 @@ supplies real values.
 L3 (correction, mine): I previously told the owner that the portafolio click
 targets sat over an unrelated logo. They do not: they match the ten stretched
 pieces in order. The observation was wrong and is corrected here.
+
+L4 (hover language, decided by iteration): the first gesture was a flip card per
+component. It was replaced because a card laid over the block competes with the
+artwork, and without a photo its back face read as a grey slab with a stray rim.
+
+The path, so it is not repeated:
+- flip card per piece, then five grouped cards (five works, not ten);
+- a first attempt at "the group lifts" applied only `scale(1.03)` to the sibling
+  blocks, which produced NO visible change: `.geometry` sits at `fill-opacity: 0`
+  and `stroke-width: 0` at rest, so scaling it scales nothing visible;
+- reverted, then re-applied so every block of the card receives the full state
+  the pointer gives its own block;
+- fixed the highlight overflowing thin pieces (the hit boxes are crop boxes, much
+  taller than the visible bar) by giving single-piece cards a 3px rim and 0.8%
+  growth, and locked pieces 1.5px and 0.6%;
+- replaced the flip with an INVERSION: the block itself fills with paper and
+  carries the name in ink, fading in from scale(0.94). The flip is still reachable
+  with `?hover=flip` for comparison and should be deleted once the inversion is
+  accepted;
+- removed every drawn border: the card's back face had a permanent
+  `1px solid var(--ink)` that outlined an empty container, and locked pieces drew
+  a 1.5px stroke. The card is delimited by contrast; locked pieces now grow 1.5%
+  with an 18% fill and no outline.
+
+Locked pieces (`solid-cap`, `solid-dot`) never open anything. Cards exist only on
+`/portafolio/`; the other scenes reuse the same pieces for navigation.
+
+L5 (open, exact state): `card-1` has the real work — MIDI4all, proyecto artístico
+audiovisual del colectivo MIDILab, presentado en 990 Arte Club, Córdoba — with
+`_DSC5779-web.jpg`, resized to 1600px and 231 KB from the 2.5 MB original.
+`card-2` to `card-5` still say `TODO: título`.
+
+Material dropped by the owner and NOT yet used or versioned, all under
+`public/assets/portafolio/`:
+- `midi4all/`: `IMG_7459.jpg`, `IMG_7460.jpg`, `_DSC5869.jpg` and the screenshot
+  holding the MIDI4all text;
+- `NocheDeLosMueseos-2025/Textos curatoriales.pdf`;
+- `NocheDeLosMueseos-2026/Textos curatoriales - GENTE QUE NO Junio.pdf`.
+Originals are never committed: only resized copies are, as with `_DSC5779-web.jpg`.
+
+Next: read the two curated texts, fill `card-2` to `card-5`, optimise their photos,
+then T3 — the piece morphing into the panel instead of the panel appearing from
+the centre of the screen.
