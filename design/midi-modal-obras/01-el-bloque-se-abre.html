@@ -1,0 +1,316 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>01 · El bloque se abre — apertura del panel de obra</title>
+<style>
+  :root {
+    --paper: #f4f4f4;
+    --ink: #111111;
+    --ease-out: cubic-bezier(.16, 1, .3, 1);
+    --geo: .52s;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    background: var(--ink);
+    color: var(--paper);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    overflow: hidden;
+  }
+  #board { position: relative; height: 100svh; min-height: 620px; overflow: hidden; }
+
+  /* --- the archive the visitor is looking at ------------------------------- */
+  .hud {
+    position: absolute; z-index: 3; display: flex; gap: 22px;
+    font-size: 10px; letter-spacing: .16em; text-transform: uppercase;
+  }
+  .hud--top { top: 26px; left: 30px; }
+  .hud--bottom { bottom: 26px; left: 30px; }
+  .hud b { font-weight: 500; }
+  .hud .dim { opacity: .6; }
+
+  .archive { position: absolute; inset: 0; }
+  .piece {
+    position: absolute; background: var(--paper); color: var(--ink);
+    border: 0; padding: 0; cursor: crosshair;
+    display: flex; align-items: flex-end;
+    font: inherit; font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
+    transition: transform .3s var(--ease-out), opacity .3s ease;
+  }
+  .piece > span { padding: 0 10px 8px; opacity: 0; transition: opacity .24s ease; }
+  .piece:hover > span, .piece:focus-visible > span { opacity: 1; }
+  .piece:focus-visible { outline: 2px dashed var(--paper); outline-offset: 6px; }
+  .piece--faded { opacity: .16; }
+  /* The five stretched bars of the resting archive, roughly as they sit today. */
+  #p1 { left: 6%;  top: 20%; width: 26%; height: 96px; }
+  #p2 { left: 36%; top: 20%; width: 58%; height: 96px; }
+  #p3 { left: 36%; top: 34%; width: 26%; height: 190px; }
+  #p4 { left: 66%; top: 34%; width: 28%; height: 190px; }
+  #p5 { left: 6%;  top: 62%; width: 84%; height: 190px; }
+
+  /* --- the panel ----------------------------------------------------------- */
+  #panel {
+    position: absolute; z-index: 5; overflow: hidden;
+    background: var(--paper); color: var(--ink);
+    border: 10px solid var(--ink);
+    outline: 2px solid var(--paper);
+    opacity: 0; pointer-events: none; visibility: hidden;
+    transition:
+      left var(--geo) var(--ease-out), top var(--geo) var(--ease-out),
+      width var(--geo) var(--ease-out), height var(--geo) var(--ease-out),
+      opacity .16s linear, visibility 0s linear .16s;
+  }
+  #panel.is-open {
+    opacity: 1; pointer-events: auto; visibility: visible;
+    transition:
+      left var(--geo) var(--ease-out), top var(--geo) var(--ease-out),
+      width var(--geo) var(--ease-out), height var(--geo) var(--ease-out),
+      opacity .12s linear, visibility 0s;
+  }
+  /* The inner column is laid out at the final width from the first frame, so the
+     text never reflows while the box is still growing: it is clipped instead. */
+  .inner {
+    width: var(--final-w, 100%); height: 100%;
+    padding: 46px 52px 40px; overflow: hidden;
+    display: grid; grid-template-rows: auto auto 1fr auto; gap: 26px;
+  }
+  .inner > * { opacity: 0; transform: translateY(12px); }
+  .is-open .inner > * {
+    opacity: 1; transform: none;
+    transition: opacity .3s ease, transform .46s var(--ease-out);
+  }
+  .is-open .inner > *:nth-child(1) { transition-delay: .16s; }
+  .is-open .inner > *:nth-child(2) { transition-delay: .21s; }
+  .is-open .inner > *:nth-child(3) { transition-delay: .27s; }
+  .is-open .inner > *:nth-child(4) { transition-delay: .33s; }
+
+  .kicker {
+    display: flex; justify-content: space-between; gap: 20px;
+    font-size: 10px; letter-spacing: .18em; text-transform: uppercase;
+  }
+  .kicker .rule { flex: 1; border-top: 1px solid var(--ink); transform: translateY(-4px); }
+  h1 {
+    margin: 0; font-weight: 400; letter-spacing: -.06em; line-height: .92;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: clamp(34px, 5.2vw, 68px);
+  }
+  .body-grid { display: grid; grid-template-columns: 1.05fr .95fr; gap: 34px; min-height: 0; }
+  .body-grid p { margin: 0 0 14px; font-size: 13px; line-height: 1.85; max-width: 46ch; }
+  .body-grid p:last-child { margin-bottom: 0; }
+  .plate { border: 1px solid var(--ink); display: flex; flex-direction: column; min-height: 0; }
+  .plate .shot {
+    flex: 1; min-height: 120px;
+    background:
+      repeating-linear-gradient(90deg, rgba(17,17,17,.14) 0 1px, transparent 1px 7px),
+      linear-gradient(155deg, #d8d8d8, #bdbdbd 55%, #2a2a2a);
+  }
+  .plate figcaption {
+    border-top: 1px solid var(--ink); padding: 8px 10px;
+    font-size: 9px; letter-spacing: .14em; text-transform: uppercase; opacity: .8;
+  }
+  .foot {
+    display: flex; justify-content: space-between; align-items: baseline; gap: 20px;
+    border-top: 1px solid var(--ink); padding-top: 14px;
+    font-size: 10px; letter-spacing: .16em; text-transform: uppercase;
+  }
+  .foot button {
+    font: inherit; letter-spacing: inherit; text-transform: inherit;
+    background: none; border: 1px solid var(--ink); padding: 10px 16px; cursor: pointer; color: var(--ink);
+  }
+  .foot button:hover { background: var(--ink); color: var(--paper); }
+  .foot button:focus-visible { outline: 2px dashed var(--ink); outline-offset: 4px; }
+
+  .hint { position: absolute; z-index: 3; bottom: 26px; right: 30px; font-size: 10px; letter-spacing: .16em; text-transform: uppercase; opacity: .6; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { transition-duration: 1ms !important; transition-delay: 0s !important; }
+  }
+</style>
+</head>
+<body>
+<main id="board">
+  <div class="hud hud--top">
+    <span><b>01</b> · El bloque se abre</span>
+    <span class="dim">Dirección A</span>
+  </div>
+
+  <div class="archive" aria-label="Archivo de obras">
+    <button class="piece" id="p1" data-work="midi4all"><span>MIDI4all</span></button>
+    <button class="piece" id="p2" data-work="artelogia"><span>Arteología digital</span></button>
+    <button class="piece" id="p3" data-work="reforma"><span>Reafirmá la Reforma</span></button>
+    <button class="piece" id="p4" data-work="cadena"><span>Cadena de memorias</span></button>
+    <button class="piece" id="p5" data-work="borges"><span>Borges</span></button>
+  </div>
+
+  <section id="panel" role="dialog" aria-modal="true" aria-labelledby="panel-title" aria-hidden="true">
+    <div class="inner">
+      <div class="kicker">
+        <span id="panel-kicker">2026 · Centro Cultural UNC</span>
+        <span class="rule" aria-hidden="true"></span>
+        <span id="panel-index">01 / 05</span>
+      </div>
+      <h1 id="panel-title">Reafirmá la Reforma</h1>
+      <div class="body-grid">
+        <div id="panel-copy"></div>
+        <figure class="plate" style="margin:0">
+          <div class="shot" aria-hidden="true"></div>
+          <figcaption id="panel-shot">foto · DSC01479.jpg</figcaption>
+        </figure>
+      </div>
+      <div class="foot">
+        <span id="panel-meta">Instalación interactiva · retroproyección</span>
+        <button id="close" type="button">Cerrar · Esc</button>
+      </div>
+    </div>
+  </section>
+
+  <p class="hint">Click en un bloque · Esc para cerrar</p>
+</main>
+
+<script>
+  const works = {
+    midi4all: {
+      kicker: '2025 · 990 Arte Club, Córdoba',
+      title: 'MIDI4all',
+      copy: [
+        'Proyecto artístico audiovisual concebido como un espacio de experimentación contemporánea y creación multidisciplinar, abierto a artistas que encuentren en MIDI4all un espacio de participación activa.',
+        'En cada presentación realizamos una selección previa de piezas que sirven como punto de partida para la construcción de un paisaje sonoro en vivo: sonido, visuales, pintura y otras expresiones.',
+      ],
+      shot: 'foto · DSC5869.jpg',
+      meta: 'Live set audiovisual',
+    },
+    artelogia: {
+      kicker: '2025 · Noche de los Museos, CCUNC',
+      title: 'Arteología digital',
+      copy: [
+        'Visible desde el exterior a través de las ventanas del Refectorio, la instalación propone un acto de arteología: una práctica que fusiona las herramientas del arte contemporáneo con los métodos de la arqueología del patrimonio.',
+        'La obra utiliza la inteligencia artificial como herramienta para excavar en la memoria histórica, y da rostro y movimiento a las labores fundacionales de la Manzana Jesuítica.',
+      ],
+      shot: 'foto · IMG_0728.jpg',
+      meta: 'Video generativo · proyección sobre ventanas',
+    },
+    reforma: {
+      kicker: '2026 · Centro Cultural UNC',
+      title: 'Reafirmá la Reforma',
+      copy: [
+        'El espacio del Refectorio reúne dos instalaciones que marcan el punto de unión del recorrido artístico: un collage audiovisual proyectado sobre el muro posterior y esta instalación interactiva, retroproyectada sobre la puerta del mismo.',
+        'Propone el gesto simbólico de plasmar la propia firma sobre una versión digital del acta de 1918, sumando cada huella individual a un mismo documento colectivo.',
+      ],
+      shot: 'foto · DSC01479.jpg',
+      meta: 'Instalación interactiva · retroproyección',
+    },
+    cadena: {
+      kicker: '2025 · Noche de los Museos, CCUNC',
+      title: 'Cadena de memorias',
+      copy: [
+        'Un espacio de reflexión y homenaje a la memoria de las personas esclavizadas, cuyo trabajo forzado fue fundamental para construir y sostener el patrimonio jesuítico.',
+        'Una gran máscara escultórica unida a una cadena cobra vida a través de un videomapping que proyecta expresiones, rostros y grabados de culturas originarias.',
+      ],
+      shot: 'foto · IMG_0796.jpg',
+      meta: 'Escultura · videomapping',
+    },
+    borges: {
+      kicker: '2026 · Noche de los Museos, CCUNC',
+      title: 'Borges o la coincidencia de los opuestos',
+      copy: [
+        'Una intervención en la explanada que acompaña las microcharlas de La Botica, y un collage colectivo interactivo en el Refectorio: el público interviene la composición desde su celular.',
+        'El punto de partida es la posibilidad de que elementos aparentemente opuestos se encuentren, se reflejen y se transformen.',
+      ],
+      shot: 'render · explanada',
+      meta: 'Escenografía · instalación interactiva',
+    },
+  };
+
+  const panel = document.getElementById('panel');
+  const pieceEls = [...document.querySelectorAll('.piece')];
+  const closeBtn = document.getElementById('close');
+  let active = null;
+  let opener = null;
+
+  function paint(work) {
+    document.getElementById('panel-kicker').textContent = work.kicker;
+    document.getElementById('panel-title').textContent = work.title;
+    document.getElementById('panel-copy').innerHTML = work.copy.map((p) => `<p>${p}</p>`).join('');
+    document.getElementById('panel-shot').textContent = work.shot;
+    document.getElementById('panel-meta').textContent = work.meta;
+    document.getElementById('panel-index').textContent = work.index;
+  }
+
+  function open(piece) {
+    const work = works[piece.dataset.work];
+    if (!work) return;
+    opener = piece;
+    active = work;
+    work.index = String(pieceEls.indexOf(piece) + 1).padStart(2, '0') + ' / 05';
+    paint(work);
+
+    // Final geometry of the panel: the destination the block grows into.
+    const b = document.getElementById('board').getBoundingClientRect();
+    const left = Math.round(b.width * .12);
+    const top = Math.round(b.height * .1);
+    const width = Math.round(b.width * .76);
+    const height = Math.round(b.height * .8);
+
+    // Start exactly on the block the pointer hit: the motion is the block itself.
+    const r = piece.getBoundingClientRect();
+    panel.style.setProperty('--final-w', (width - 20) + 'px');
+    panel.style.left = (r.left - b.left) + 'px';
+    panel.style.top = (r.top - b.top) + 'px';
+    panel.style.width = r.width + 'px';
+    panel.style.height = r.height + 'px';
+    panel.setAttribute('aria-hidden', 'false');
+
+    // Force the first frame before growing, or the browser coalesces both states.
+    void panel.offsetWidth;
+    panel.classList.add('is-open');
+    panel.style.left = left + 'px';
+    panel.style.top = top + 'px';
+    panel.style.width = width + 'px';
+    panel.style.height = height + 'px';
+
+    pieceEls.forEach((el) => el.classList.toggle('piece--faded', el !== piece));
+    piece.setAttribute('aria-expanded', 'true');
+    closeBtn.focus({ preventScroll: true });
+  }
+
+  function close() {
+    if (!panel.classList.contains('is-open')) return;
+    panel.classList.remove('is-open');
+    panel.setAttribute('aria-hidden', 'true');
+    pieceEls.forEach((el) => el.classList.remove('piece--faded'));
+    if (opener) {
+      opener.setAttribute('aria-expanded', 'false');
+      opener.focus({ preventScroll: true });
+    }
+    const done = () => {
+      panel.style.visibility = 'hidden';
+      panel.removeEventListener('transitionend', onEnd);
+    };
+    const onEnd = (event) => { if (event.propertyName === 'width') done(); };
+    panel.addEventListener('transitionend', onEnd);
+    // The start geometry is recomputed on open, so the closing frame can go home.
+    if (opener) {
+      const b = document.getElementById('board').getBoundingClientRect();
+      const r = opener.getBoundingClientRect();
+      panel.style.left = (r.left - b.left) + 'px';
+      panel.style.top = (r.top - b.top) + 'px';
+      panel.style.width = r.width + 'px';
+      panel.style.height = r.height + 'px';
+    }
+    active = null;
+  }
+
+  pieceEls.forEach((piece) => {
+    piece.setAttribute('aria-expanded', 'false');
+    piece.addEventListener('click', () => open(piece));
+  });
+  closeBtn.addEventListener('click', close);
+  addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') close();
+  });
+</script>
+</body>
+</html>
