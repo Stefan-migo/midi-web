@@ -49,6 +49,10 @@ const coordinateNode = must<HTMLElement>('#coordinate');
 const whisperNode = must<HTMLElement>('#whisper');
 const reduced = matchMedia('(prefers-reduced-motion: reduce)');
 const narrowViewport = matchMedia('(max-width: 650px)');
+/** A touch that travels further than this in either axis is a swipe, not a tap. */
+const TOUCH_SLOP_PX = 12;
+/** The `click` synthesized by a tap arrives well inside this window. */
+const TOUCH_CLICK_WINDOW_MS = 700;
 
 // Locked pieces are highlighted by their own silhouette, not by their crop box:
 // the box is a partition of the artwork, so filling it would read as a frame.
@@ -399,7 +403,32 @@ function mountPieces(): void {
     piece.addEventListener('pointerleave', clearLabel);
     piece.addEventListener('focus', showLabel);
     piece.addEventListener('blur', clearLabel);
-    piece.addEventListener('click', activate);
+    // A touch browser can spend the first tap on the hover state of a styled
+    // block and turn only the second tap into a `click`. The HUD promises one
+    // touch ("tocá una forma"), so a touch activates on its own release, within a
+    // movement budget that keeps a swipe from opening anything. The `click`
+    // synthesized by that same gesture is then ignored, so nothing opens twice.
+    let touchOrigin: { id: number; x: number; y: number } | undefined;
+    let touchActivatedAt = -Infinity;
+    piece.addEventListener('pointerdown', (event) => {
+      if (event.pointerType === 'mouse' || !event.isPrimary) return;
+      touchOrigin = { id: event.pointerId, x: event.clientX, y: event.clientY };
+    });
+    piece.addEventListener('pointercancel', () => {
+      touchOrigin = undefined;
+    });
+    piece.addEventListener('pointerup', (event) => {
+      if (event.pointerType === 'mouse' || touchOrigin?.id !== event.pointerId) return;
+      const moved = Math.hypot(event.clientX - touchOrigin.x, event.clientY - touchOrigin.y);
+      touchOrigin = undefined;
+      if (moved > TOUCH_SLOP_PX) return;
+      touchActivatedAt = performance.now();
+      activate();
+    });
+    piece.addEventListener('click', () => {
+      if (performance.now() - touchActivatedAt < TOUCH_CLICK_WINDOW_MS) return;
+      activate();
+    });
     piece.addEventListener('keydown', (event) => {
       if (event.key === 'Enter' || event.key === ' ') {
         event.preventDefault();
