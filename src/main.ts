@@ -8,7 +8,7 @@ import {
   withBase,
   type RouteSpec,
 } from './lib/routes';
-import { archiveCards, cardForPiece, lockedPieces, pieceLabel } from './content/portfolio';
+import { archiveCards, cardForPiece, isLockedPiece, lockedPieces, pieceLabel, type ArchiveCard } from './content/portfolio';
 import { pieces as pieceTable, silhouetteMasks } from './motion/transition.mjs';
 import { placeLabels } from './motion/label-layout.mjs';
 import { playBetween, regions, renderPosition, transitionDurationMs } from './motion/site-motion.mjs';
@@ -47,12 +47,15 @@ const closeButton = must<HTMLButtonElement>('#close');
 const coordinateNode = must<HTMLElement>('#coordinate');
 const whisperNode = must<HTMLElement>('#whisper');
 const reduced = matchMedia('(prefers-reduced-motion: reduce)');
+const narrowViewport = matchMedia('(max-width: 650px)');
 
 // Locked pieces are highlighted by their own silhouette, not by their crop box:
 // the box is a partition of the artwork, so filling it would read as a frame.
 // These live on the SVG itself because `#pieces` is emptied on every scene change.
 const silhouetteDefs = document.createElementNS(pieces.namespaceURI, 'defs');
-silhouetteDefs.innerHTML = silhouetteMasks([...lockedPieces]);
+silhouetteDefs.innerHTML = silhouetteMasks(
+  [...lockedPieces].filter((name) => isLockedPiece(name, narrowViewport.matches)),
+);
 hitRegions.prepend(silhouetteDefs);
 
 let sceneIndex = 0;
@@ -79,7 +82,133 @@ function transitionTimeScale(from: number, to: number): number {
   const distance = Math.abs(to - from);
   return distance <= 1 ? 1 : WRAP_TOTAL_MS / (distance * SEGMENT_MS);
 }
-let returnFocus: HTMLElement | undefined;
+let returnFocus: HTMLElement | SVGElement | undefined;
+let archiveSourceRect: DOMRect | undefined;
+let archiveFrameEdges: HTMLDivElement[] = [];
+let archiveAnimationRun = 0;
+
+const ARCHIVE_EDGE_DURATION_MS = 500;
+const ARCHIVE_EDGE_STAGGER_MS = 40;
+const ARCHIVE_BODY_DELAY_MS = 340;
+const ARCHIVE_CONTENT_DELAY_MS = 520;
+const ARCHIVE_CLOSE_DURATION_MS = 220;
+const ARCHIVE_EASE = 'cubic-bezier(.16, 1, .3, 1)';
+
+function makeFrameEdge(box: { left: number; top: number; width: number; height: number }): HTMLDivElement {
+  const edge = document.createElement('div');
+  edge.className = 'archive-frame-edge';
+  Object.assign(edge.style, boxFrames(box));
+  return edge;
+}
+
+/** A box as the px strings WAAPI needs to animate those four properties. */
+function boxFrames(box: { left: number; top: number; width: number; height: number }) {
+  return {
+    left: `${box.left}px`,
+    top: `${box.top}px`,
+    width: `${box.width}px`,
+    height: `${box.height}px`,
+  };
+}
+
+/**
+ * The four slices land on the panel's own 2px paper outline. The panel already
+ * carries the 10px ink border the identity asks for, so the gap is zero here and
+ * the frame tracks the panel box, never its 5% padding.
+ */
+const ARCHIVE_FRAME_GAP_PX = 0;
+
+function archiveFrameBoxes(paper: DOMRect): Array<{ left: number; top: number; width: number; height: number }> {
+  const gap = ARCHIVE_FRAME_GAP_PX;
+  const left = paper.left - gap;
+  const top = paper.top - gap;
+  const width = paper.width + gap * 2;
+  const height = paper.height + gap * 2;
+  return [
+    { left: left - 2, top: top - 2, width: width + 4, height: 2 },
+    { left: left - 2, top: top + height, width: width + 4, height: 2 },
+    { left: left - 2, top, width: 2, height },
+    { left: left + width, top, width: 2, height },
+  ];
+}
+
+function clearArchiveEdges(): void {
+  for (const edge of archiveFrameEdges) {
+    edge.getAnimations().forEach((animation) => animation.cancel());
+    edge.remove();
+  }
+  archiveFrameEdges = [];
+}
+
+function animateArchiveOpen(source: DOMRect): void {
+  archiveSourceRect = source;
+  reveal.classList.add('archive-motion');
+  if (reduced.matches) {
+    reveal.classList.add('archive-reduced');
+    return;
+  }
+
+  const frame = archiveFrameBoxes(reveal.getBoundingClientRect());
+  const sliceWidth = source.width / 4;
+  const run = ++archiveAnimationRun;
+  clearArchiveEdges();
+  const flights = frame.map((target, index) => {
+    const origin = {
+      left: source.left + index * sliceWidth,
+      top: source.top,
+      width: sliceWidth,
+      height: source.height,
+    };
+    const edge = makeFrameEdge(origin);
+    document.body.append(edge);
+    archiveFrameEdges.push(edge);
+    return edge
+      .animate([boxFrames(origin), boxFrames(target)], {
+        duration: ARCHIVE_EDGE_DURATION_MS,
+        delay: index * ARCHIVE_EDGE_STAGGER_MS,
+        easing: ARCHIVE_EASE,
+        fill: 'forwards',
+      })
+      .finished.catch(() => undefined);
+  });
+
+  // Once the hairline has landed the panel's own outline carries it, so the bars
+  // go away instead of drifting the first time the viewport is resized.
+  void Promise.all(flights).then(() => {
+    if (run === archiveAnimationRun) clearArchiveEdges();
+  });
+
+  requestAnimationFrame(() => {
+    if (run === archiveAnimationRun) reveal.classList.add('archive-opening');
+  });
+}
+
+function finishArchiveClose(): void {
+  ++archiveAnimationRun;
+  clearArchiveEdges();
+  archiveSourceRect = undefined;
+  reveal.classList.remove('archive-motion', 'archive-opening', 'archive-closing', 'archive-reduced');
+  reveal.hidden = true;
+  reveal.setAttribute('aria-hidden', 'true');
+  for (const sibling of [...world.children]) {
+    if (sibling !== reveal) (sibling as HTMLElement).inert = false;
+  }
+  if (returnFocus) returnFocus.focus();
+  returnFocus = undefined;
+}
+
+function animateArchiveClose(): boolean {
+  if (!reveal.classList.contains('archive-motion')) return false;
+  const run = ++archiveAnimationRun;
+  reveal.classList.remove('archive-opening');
+  reveal.classList.add('archive-closing');
+  // The panel shuts like a projector shutter; the slices already became the
+  // hairline on the way in, so nothing has to fly back.
+  window.setTimeout(() => {
+    if (run === archiveAnimationRun) finishArchiveClose();
+  }, reduced.matches ? 0 : ARCHIVE_CLOSE_DURATION_MS);
+  return true;
+}
 
 function currentScene(): Scene {
   const scene = scenes[sceneIndex];
@@ -149,7 +278,7 @@ function mountPieces(): void {
       text.className = 'card-text';
       const cardTitle = document.createElement('span');
       cardTitle.className = 'card-title';
-      cardTitle.textContent = definition.title;
+      cardTitle.textContent = definition.name;
       const cardSubtitle = document.createElement('span');
       cardSubtitle.className = 'card-subtitle';
       cardSubtitle.textContent = definition.subtitle;
@@ -200,8 +329,8 @@ function mountPieces(): void {
     const name = pieceTable[index]?.name ?? `piece-${index}`;
     // Locking and cards are archive-only: the other scenes use the same pieces
     // for navigation, where the hero highlight already has its own behaviour.
-    const locked = sceneIndex === 1 && lockedPieces.has(name);
-    const definition = sceneIndex === 1 && !locked ? cardForPiece(name) : undefined;
+    const locked = sceneIndex === 1 && isLockedPiece(name, narrowViewport.matches);
+    const definition = sceneIndex === 1 && !locked ? cardForPiece(name, narrowViewport.matches) : undefined;
 
     // The hit boxes are crop boxes, not tight outlines of the visible shape, so a
     // fixed 12px rim and a 3% growth are fine on the thick blocks of the M and far
@@ -234,7 +363,7 @@ function mountPieces(): void {
       sceneIndex === 0
         ? `Abrir ${targetLabel ?? 'contenido'}, fragmento ${index + 1}`
         : definition
-          ? `${definition.title}. Abrir la obra`
+          ? `${definition.name}. Abrir la obra`
           : pieceLabel(name),
     );
 
@@ -250,16 +379,16 @@ function mountPieces(): void {
       if (sceneIndex === 0) {
         if (target) navigate(target.path);
       } else if (definition) {
-        openContent(index);
+        openContent(index, definition, piece);
       }
     };
     const showLabel = (): void => {
-      whisperNode.textContent = definition?.title ?? pieceLabel(name);
-      if (definition) revealCard(definition.id);
+      whisperNode.textContent = definition?.name ?? pieceLabel(name, narrowViewport.matches);
+      if (definition && !(narrowViewport.matches && name === 'solid-dot')) revealCard(definition.id);
     };
     const clearLabel = (): void => {
       whisperNode.textContent = site.hint ?? '';
-      if (definition) concealCard(definition.id);
+      if (definition && !(narrowViewport.matches && name === 'solid-dot')) concealCard(definition.id);
     };
     piece.addEventListener('pointerenter', showLabel);
     piece.addEventListener('pointerleave', clearLabel);
@@ -323,7 +452,7 @@ function layoutCards(): void {
 function setScene(animate = true): void {
   targetPosition = routeIndex(location.pathname, routes, base);
   sceneIndex = targetPosition;
-  closeContent();
+  closeContent(false);
   cancelTransition?.();
   world.dataset['scene'] = String(sceneIndex);
   const data = currentScene();
@@ -359,11 +488,86 @@ function showFrame(next: number): void {
   art.innerHTML = renderPosition(next);
 }
 
-function openContent(index: number): void {
-  returnFocus = document.activeElement instanceof HTMLElement ? document.activeElement : undefined;
+function renderArchiveWork(work: ArchiveCard): void {
+  const index = archiveCards.indexOf(work);
+  const header = document.createElement('header');
+  header.className = 'work-header';
+  const eyebrow = document.createElement('p');
+  eyebrow.className = 'work-eyebrow';
+  eyebrow.textContent = [work.year, work.venue, work.dateLabel]
+    .filter((value) => value && !value.startsWith('TODO'))
+    .join(' · ');
+  header.append(eyebrow, closeButton);
+  const title = document.createElement('h2');
+  title.id = 'reveal-title';
+  title.setAttribute('aria-live', 'polite');
+  title.textContent = work.title;
+  const details = document.createElement('div');
+  details.className = 'work-details';
+  details.append(title);
+  const metadata = document.createElement('dl');
+  metadata.className = 'work-metadata';
+  for (const [label, value] of [['Año', work.year], ['Lugar', work.venue], ['Fecha', work.dateLabel], ['Estado', work.upcoming ? 'Próxima' : '']] as const) {
+    if (!value || value.startsWith('TODO')) continue;
+    const term = document.createElement('dt'); term.textContent = label;
+    const description = document.createElement('dd'); description.textContent = value;
+    metadata.append(term, description);
+  }
+  details.append(metadata);
+  for (const text of work.body ?? []) {
+    const paragraph = document.createElement('p'); paragraph.className = 'work-copy'; paragraph.textContent = text;
+    details.append(paragraph);
+  }
+  if (work.installations.length) {
+    const section = document.createElement('section'); section.className = 'work-installations';
+    const subheading = document.createElement('h3'); subheading.textContent = 'Instalaciones';
+    const list = document.createElement('ul');
+    for (const itemText of work.installations) { const item = document.createElement('li'); item.textContent = itemText; list.append(item); }
+    section.append(subheading, list); details.append(section);
+  }
+  const media = document.createElement('figure');
+  media.className = `work-media work-media--${work.media}`;
+  if (work.image && work.imageAlt) {
+    const image = document.createElement('img');
+    image.src = withBase(`/${work.image}`, base); image.alt = work.imageAlt;
+    image.loading = 'lazy'; image.decoding = 'async'; image.className = 'work-image';
+    const frame = document.createElement('div'); frame.className = 'work-image-frame'; frame.append(image); media.append(frame);
+  }
+  if (work.metadata) { const caption = document.createElement('figcaption'); caption.className = 'work-credit'; caption.textContent = work.metadata; media.append(caption); }
+  const footer = document.createElement('nav'); footer.className = 'work-navigation'; footer.setAttribute('aria-label', 'Navegar entre obras');
+  const previous = archiveCards[(index + archiveCards.length - 1) % archiveCards.length]!;
+  const next = archiveCards[(index + 1) % archiveCards.length]!;
+  const count = document.createElement('span'); count.className = 'work-count'; count.textContent = `${String(index + 1).padStart(2, '0')} / ${String(archiveCards.length).padStart(2, '0')}`;
+  const prevButton = document.createElement('button'); prevButton.type = 'button'; prevButton.textContent = `Anterior · ← ${previous.name}`; prevButton.onclick = () => switchArchive(index - 1, 'previous');
+  const nextButton = document.createElement('button'); nextButton.type = 'button'; nextButton.textContent = `Siguiente · ${next.name} →`; nextButton.onclick = () => switchArchive(index + 1, 'next');
+  footer.append(count, prevButton, nextButton);
+  revealBody.replaceChildren(header, media, details, footer);
+}
+
+function switchArchive(target: number, focusButton?: 'previous' | 'next'): void {
+  const index = (target + archiveCards.length) % archiveCards.length;
+  const work = archiveCards[index]; if (!work) return;
+  const old = revealBody;
+  old.classList.add('work-switching');
+  window.setTimeout(() => {
+    renderArchiveWork(work);
+    reveal.scrollTop = 0;
+    revealBody.classList.remove('work-switching');
+    if (focusButton) revealBody.querySelector<HTMLButtonElement>(`.work-navigation button:${focusButton === 'previous' ? 'first-of-type' : 'last-of-type'}`)?.focus();
+  }, 160);
+}
+
+function openContent(index: number, work?: ArchiveCard, opener?: SVGRectElement): void {
+  returnFocus = opener ?? (
+    document.activeElement instanceof HTMLElement || document.activeElement instanceof SVGElement
+      ? document.activeElement
+      : undefined
+  );
   selected = index % 4;
   const data = currentScene();
-  if (data.gallery?.length) {
+  if (work) {
+    renderArchiveWork(work);
+  } else if (data.gallery?.length) {
     const item = data.gallery[selected % data.gallery.length];
     if (!item) return;
     revealBody.innerHTML =
@@ -389,9 +593,17 @@ function openContent(index: number): void {
   for (const sibling of [...world.children]) {
     if (sibling !== reveal) (sibling as HTMLElement).inert = true;
   }
+  if (!work) reveal.append(closeButton);
   reveal.hidden = false;
+  if (work && opener) animateArchiveOpen(opener.getBoundingClientRect());
+  else {
+    reveal.classList.remove('archive-motion', 'archive-opening', 'archive-closing', 'archive-reduced');
+    clearArchiveEdges();
+    archiveSourceRect = undefined;
+  }
   reveal.setAttribute('role', 'dialog');
   reveal.setAttribute('aria-modal', 'true');
+  reveal.setAttribute('aria-hidden', 'false');
   closeButton.focus();
 }
 
@@ -412,18 +624,26 @@ function changeArt(step: number): void {
   }
 }
 
-function closeContent(): void {
+function closeContent(animate = true): void {
   const wasOpen = !reveal.hidden;
-  reveal.hidden = true;
-  if (wasOpen) {
+  const closingArchiveMotion = wasOpen && animate && animateArchiveClose();
+  if (!closingArchiveMotion) {
+    reveal.hidden = true;
+    reveal.setAttribute('aria-hidden', 'true');
+    reveal.classList.remove('archive-motion', 'archive-opening', 'archive-closing', 'archive-reduced');
+    clearArchiveEdges();
+    archiveSourceRect = undefined;
+  }
+  if (wasOpen && !closingArchiveMotion) {
     for (const sibling of [...world.children]) {
       if (sibling !== reveal) (sibling as HTMLElement).inert = false;
     }
+    if (returnFocus) returnFocus.focus();
+    returnFocus = undefined;
   }
-  if (wasOpen && returnFocus) returnFocus.focus();
 }
 
-closeButton.onclick = closeContent;
+closeButton.onclick = () => closeContent();
 
 /**
  * Runs the transition to `targetPosition`. One place owns the in-flight state,
@@ -570,7 +790,12 @@ document.addEventListener('click', (event) => {
 });
 
 document.addEventListener('keydown', (event) => {
-  if (event.key === 'Escape') closeContent();
+  if (event.key === 'Escape' && !reveal.hidden) closeContent();
+  if (!reveal.hidden && reveal.classList.contains('archive-motion') && (event.key === 'ArrowLeft' || event.key === 'ArrowRight')) {
+    event.preventDefault();
+    const current = archiveCards.findIndex((card) => card.title === revealBody.querySelector('#reveal-title')?.textContent);
+    switchArchive(current + (event.key === 'ArrowLeft' ? -1 : 1), event.key === 'ArrowLeft' ? 'previous' : 'next');
+  }
   if (!reveal.hidden && event.key === 'Tab') {
     const focusable = [...reveal.querySelectorAll<HTMLElement>('button,a')];
     const first = focusable[0];
@@ -593,6 +818,13 @@ reduced.addEventListener('change', () => {
 });
 
 addEventListener('popstate', () => setScene());
+narrowViewport.addEventListener('change', () => {
+  // Keep locked silhouettes in sync, then rebuild both hit regions and card host.
+  silhouetteDefs.innerHTML = silhouetteMasks(
+    [...lockedPieces].filter((name) => isLockedPiece(name, narrowViewport.matches)),
+  );
+  mountPieces();
+});
 addEventListener('resize', () => {
   placeLabels(sceneIndex);
   layoutCards();
