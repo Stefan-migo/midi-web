@@ -145,3 +145,7 @@ edge, the document has no horizontal overflow, a long work scrolls inside the
 panel (1247 against 844) and keeps its own navigation at the bottom; the × still
 closes it after scrolling. The whole bench is 33 asserts, 0 failures, plus the
 size sweep (360x640, 430x932, reduced motion). `npm run verify` green.
+
+L15 (verification, RDD): the native review of the archive panel candidate
+(`review-23ae08c91ea9eef3`, readability + reliability, medium tier, 38 changed
+lines) is **approved with no findings** and its receipt is burned.
