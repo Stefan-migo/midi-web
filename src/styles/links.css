@@ -3,6 +3,15 @@ html { min-height: 100%; background: #111111; }
 body { margin: 0; min-height: 100svh; padding: max(28px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right)) max(28px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left)); background: #111111; color: #f4f4f4; font: 400 15px/1.6 "DM Mono", "Roboto Mono", monospace; }
 main { width: min(100%, 430px); min-height: calc(100svh - max(56px, env(safe-area-inset-top) + env(safe-area-inset-bottom))); margin-inline: auto; }
 
+/* The hidden link page is the hub and nothing else: no page padding, no
+   width cap inside it — the component centres its own column. */
+body:has(#hub) { padding: 0; }
+#hub { display: flex; width: min(100%, 430px); min-height: 100svh; margin-inline: auto; }
+#hub .midi-hub[data-surface="ink"] {
+  min-height: 100svh;
+  padding: max(62px, calc(env(safe-area-inset-top) + 54px)) max(20px, env(safe-area-inset-right)) max(28px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left));
+}
+
 /* La firma es el mismo recurso y el mismo tamaño que el HUD del sitio. */
 .signature { display: inline-block; width: 160px; margin: 0 0 28px; line-height: 0; }
 .signature img { display: block; width: 100%; height: auto; }
@@ -15,9 +24,7 @@ h1 { margin: 0; }
 h2 { margin: 32px 0 12px; font-size: 11px; letter-spacing: .16em; text-transform: uppercase; opacity: .8; }
 p { margin: 0 0 18px; }
 
-#links { display: grid; gap: 10px; }
-#links a, #preview a { display: flex; min-height: 52px; align-items: center; gap: 12px; border: 1px solid #f4f4f4; padding: 14px 16px; overflow-wrap: anywhere; }
-#links a::after { content: "↗"; margin-left: auto; font-size: 15px; }
+#preview a { display: flex; min-height: 52px; align-items: center; gap: 12px; border: 1px solid #f4f4f4; padding: 14px 16px; overflow-wrap: anywhere; }
 a { color: #f4f4f4; text-decoration: none; }
 a:focus-visible, button:focus-visible, input:focus-visible { outline: 2px dashed currentColor; outline-offset: 6px; }
 
@@ -30,5 +37,5 @@ button:disabled { opacity: .55; cursor: not-allowed; }
 pre { white-space: pre-wrap; overflow-wrap: anywhere; border: 1px solid #f4f4f4; padding: 12px; font: inherit; }
 #message { min-height: 1.6em; margin-top: 10px; font-size: 13px; opacity: .85; }
 
-@media (min-width: 650px) { body { padding-top: max(48px, env(safe-area-inset-top)); } }
+@media (min-width: 650px) { body:not(:has(#hub)) { padding-top: max(48px, env(safe-area-inset-top)); } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; animation: none !important; transition: none !important; } }

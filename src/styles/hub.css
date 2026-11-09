@@ -1,0 +1,135 @@
+/**
+ * The contact hub: one component, two surfaces.
+ *
+ * `ink` is the hidden link page over the dark world; `paper` is the panel that
+ * `/contacto/` opens. Everything that carries a fill reads one pair of tokens,
+ * so the mark, the icons and the one card invert together.
+ *
+ * The hidden page does not load `style.css`, so the two identity values live
+ * here as well: they are the only colours the component uses.
+ */
+
+.midi-hub {
+  --hub-paper: #f4f4f4;
+  --hub-ink: #111111;
+  --hub-fg: var(--hub-paper);
+  --hub-solid: var(--hub-paper);
+  --hub-on-solid: var(--hub-ink);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-height: 100%;
+  color: var(--hub-fg);
+  font-family: "DM Mono", monospace;
+  text-align: center;
+}
+.midi-hub[data-surface="paper"] {
+  --hub-fg: var(--hub-ink);
+  --hub-solid: var(--hub-ink);
+  --hub-on-solid: var(--hub-paper);
+}
+
+/* Voz de etiqueta del sitio: mono, mayúsculas, tracking amplio. */
+.midi-hub-kicker {
+  position: absolute;
+  top: 0;
+  left: 0;
+  margin: 0;
+  font-size: 10px;
+  line-height: 1.5;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  opacity: .8;
+}
+
+.midi-hub-body {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: 400px;
+  margin-inline: auto;
+}
+
+/* The mark is a solid tile, not a badge with a radius: the identity has no
+   radii. The isotipo inside is the opposite colour, so it always reads. */
+.midi-hub-mark {
+  display: grid;
+  place-items: center;
+  width: 96px;
+  height: 96px;
+  background: var(--hub-solid);
+  color: var(--hub-on-solid);
+}
+.midi-hub-mark img { display: block; width: 62%; height: auto; }
+
+.midi-hub-title {
+  margin: 24px 0 0;
+  font: 400 clamp(28px, 7vw, 40px) / 1 "Roboto Mono", monospace;
+  letter-spacing: .04em;
+}
+.midi-hub-subtitle {
+  margin: 12px 0 0;
+  font-size: 11px;
+  line-height: 1.6;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  opacity: .8;
+}
+
+/* The icon boxes are invisible at rest: only the glyph is drawn. The box fills
+   on hover and focus, which is the only movement the row has. */
+.midi-hub-icons { display: flex; gap: 6px; margin-top: 30px; }
+.midi-hub-icon {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  color: inherit;
+  transition: background-color .22s ease, color .22s ease;
+}
+.midi-hub-icon:hover,
+.midi-hub-icon:focus-visible {
+  background: var(--hub-solid);
+  color: var(--hub-on-solid);
+}
+.midi-hub-icon:focus-visible { outline: 2px dashed var(--hub-fg); outline-offset: 3px; }
+.midi-hub-glyph { display: block; width: 26px; height: 26px; }
+
+.midi-hub-links { width: 100%; margin: 34px 0 0; padding: 0; list-style: none; }
+.midi-hub-card {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  min-height: 56px;
+  padding: 14px 18px;
+  background: var(--hub-solid);
+  color: var(--hub-on-solid);
+  font-family: "Roboto Mono", monospace;
+  font-size: 13px;
+  line-height: 1.3;
+  letter-spacing: .02em;
+  transition: background-color .22s ease, color .22s ease, box-shadow .22s ease;
+}
+/* The card is the one filled block of its surface, so hovering empties it
+   instead of adding a second tone. */
+.midi-hub-card:hover,
+.midi-hub-card:focus-visible {
+  background: transparent;
+  color: var(--hub-fg);
+  box-shadow: inset 0 0 0 1px var(--hub-solid);
+}
+.midi-hub-card:focus-visible { outline: 2px dashed var(--hub-fg); outline-offset: 3px; }
+.midi-hub-card-arrow { font-size: 15px; transition: transform .22s ease; }
+.midi-hub-card:hover .midi-hub-card-arrow,
+.midi-hub-card:focus-visible .midi-hub-card-arrow { transform: translateX(4px); }
+
+@media (prefers-reduced-motion: reduce) {
+  .midi-hub-icon, .midi-hub-card, .midi-hub-card-arrow { transition: none !important; }
+  .midi-hub-card:hover .midi-hub-card-arrow,
+  .midi-hub-card:focus-visible .midi-hub-card-arrow { transform: none; }
+}

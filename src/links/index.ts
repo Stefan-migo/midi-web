@@ -1,16 +1,19 @@
-import { midiLinks } from '../content/midi-links';
+import { midiHub } from '../content/midi-links';
+import { renderMidiHub } from './hub';
+import '../styles/hub.css';
 import '../styles/links.css';
 
-const list = document.querySelector<HTMLDivElement>('#links');
-if (list) {
-  for (const item of midiLinks) {
-    const anchor = document.createElement('a');
-    anchor.href = item.href;
-    anchor.textContent = item.label;
-    if (/^https?:/i.test(item.href)) {
-      anchor.target = '_blank';
-      anchor.rel = 'noopener';
-    }
-    list.append(anchor);
-  }
+/**
+ * The hidden link page is the same component the contact panel mounts, on the
+ * ink surface: one content module, one renderer, no second design to maintain.
+ */
+const mount = document.querySelector<HTMLElement>('#hub');
+if (mount) {
+  mount.append(
+    renderMidiHub({
+      surface: 'ink',
+      kicker: midiHub.kicker,
+      headingLevel: 1,
+    }),
+  );
 }
