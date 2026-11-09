@@ -40,6 +40,25 @@ const pieceMasks = pieces.map(({name, from, to}) => `
   <mask id="source-${name}" x="0" y="0" width="1" height="1" maskUnits="userSpaceOnUse">${crop(from, sourceArt)}</mask>
   <mask id="target-${name}" x="0" y="0" width="1" height="1" maskUnits="userSpaceOnUse">${crop(to, targetArt)}</mask>`).join('');
 
+/**
+ * Masks painting only the paper of one piece at rest. The hit boxes are
+ * partitions of the artwork, so a highlight shaped like the box reads as a
+ * frame around the piece; one masked by these grows from the piece's own
+ * silhouette instead. Coordinates are the composition's, and the mask sits on
+ * the piece bounds so scaling the element scales the silhouette with it.
+ */
+export function silhouetteMasks(names) {
+  return pieces
+    .filter(({name}) => names.includes(name))
+    .map(({name, from}) => {
+      const [left, top, right, bottom] = from;
+      const width = right - left;
+      const height = bottom - top;
+      return `<mask id="silhouette-${name}" maskUnits="userSpaceOnUse" x="${left}" y="${top}" width="${width}" height="${height}"><g transform="translate(${left} ${top}) scale(${width} ${height})">${crop(from, sourceArt)}</g></mask>`;
+    })
+    .join('');
+}
+
 function animatePiece(piece, frame, sourceScaleX = 1, sourceScaleY = 1) {
   const {name, from, to, delay, arc} = piece;
   const start = 5 + delay;

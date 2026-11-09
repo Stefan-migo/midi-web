@@ -58,10 +58,11 @@
 #hit-regions .piece-group.is-single.is-active .geometry { fill-opacity: .23; stroke-width: 3; transform: scale(1.008); }
 [data-scene="0"] #hit-regions .piece-group:hover .geometry,
 [data-scene="0"] #hit-regions .piece-group:focus-within .geometry { stroke-width: 0; fill-opacity: 1; }
-/* Locked pieces answer with a slight growth only: no card, no flip. */
-#hit-regions .piece-group.is-locked .geometry { transition: fill-opacity .3s, stroke-width .3s, transform .3s; transform-box: fill-box; transform-origin: center; }
+/* Locked pieces answer with the silhouette itself growing: no card, no flip,
+   no frame. The highlight is masked by the piece, so what moves is the shape. */
+#hit-regions .piece-group.is-locked .geometry { transition: fill-opacity .3s, transform .3s; transform-box: fill-box; transform-origin: center; }
 #hit-regions .piece-group.is-locked:hover .geometry,
-#hit-regions .piece-group.is-locked:focus-within .geometry { fill-opacity: .18; stroke-width: 0; transform: scale(1.015); }
+#hit-regions .piece-group.is-locked:focus-within .geometry { fill-opacity: 1; stroke-width: 0; transform: scale(1.015); }
 @media (prefers-reduced-motion: reduce) { #hit-regions .geometry { transition: none; } }
 
 .signature { width: 160px; height: auto; line-height: 0; letter-spacing: normal; }

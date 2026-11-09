@@ -9,7 +9,7 @@ import {
   type RouteSpec,
 } from './lib/routes';
 import { archiveCards, cardForPiece, lockedPieces, pieceLabel } from './content/portfolio';
-import { pieces as pieceTable } from './motion/transition.mjs';
+import { pieces as pieceTable, silhouetteMasks } from './motion/transition.mjs';
 import { placeLabels } from './motion/label-layout.mjs';
 import { playBetween, regions, renderPosition, transitionDurationMs } from './motion/site-motion.mjs';
 
@@ -34,6 +34,7 @@ const world = must<HTMLElement>('#world');
 world.dataset['hover'] = new URLSearchParams(location.search).get('hover') ?? 'invert';
 const composition = must<HTMLElement>('#composition');
 const pieces = must<SVGSVGElement>('#pieces');
+const hitRegions = must<SVGSVGElement>('#hit-regions');
 const art = must<HTMLElement>('#motion-art');
 const reveal = must<HTMLElement>('#reveal');
 const cards = must<HTMLElement>('#piece-cards');
@@ -46,6 +47,13 @@ const closeButton = must<HTMLButtonElement>('#close');
 const coordinateNode = must<HTMLElement>('#coordinate');
 const whisperNode = must<HTMLElement>('#whisper');
 const reduced = matchMedia('(prefers-reduced-motion: reduce)');
+
+// Locked pieces are highlighted by their own silhouette, not by their crop box:
+// the box is a partition of the artwork, so filling it would read as a frame.
+// These live on the SVG itself because `#pieces` is emptied on every scene change.
+const silhouetteDefs = document.createElementNS(pieces.namespaceURI, 'defs');
+silhouetteDefs.innerHTML = silhouetteMasks([...lockedPieces]);
+hitRegions.prepend(silhouetteDefs);
 
 let sceneIndex = 0;
 let position = 0;
@@ -235,6 +243,7 @@ function mountPieces(): void {
       piece.setAttribute(key, String(value));
       geometry.setAttribute(key, String(value));
     }
+    if (locked) geometry.setAttribute('mask', `url(#silhouette-${name})`);
 
     const activate = (): void => {
       const target = routeAt(sceneIndex === 0 ? 1 : sceneIndex);

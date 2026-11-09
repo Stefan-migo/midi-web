@@ -131,3 +131,18 @@ Originals are never committed: only resized copies are, as with `_DSC5779-web.jp
 Next: read the two curated texts, fill `card-2` to `card-5`, optimise their photos,
 then T3 — the piece morphing into the panel instead of the panel appearing from
 the centre of the screen.
+
+L6 (locked hover, corrected): the 18% paper fill on `.geometry` never worked. The
+page is ink, the pieces and the highlight are both paper, so 18% paper over paper
+is invisible inside the piece; the only visible thing was the sliver of the
+scaled box escaping the bar onto the ink, which read as a translucent frame.
+Cause: the highlight is a rect as big as the piece's *crop box*, and the crop
+boxes are partitions of the artwork, not silhouettes.
+
+Fix: the locked highlight is masked by the piece's own paper (`silhouetteMasks`
+in `transition.mjs`, reusing the `sourceArt` the transition masks already build),
+so `fill-opacity: 1` plus `scale(1.03)` grows the real shape and nothing draws a
+frame. The defs live on `#hit-regions`, not on `#pieces`, because `mountPieces`
+empties `#pieces` on every scene change. `check-motion.mjs` now pins the mask
+region, the crop mapping and the viewBox against each piece's `from` bounds, and
+fails on a one-character drift.
