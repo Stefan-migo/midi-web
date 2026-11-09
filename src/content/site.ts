@@ -10,7 +10,7 @@ export const site: Site = {
       order: 0,
       navLabel: 'Inicio', // web/index.html:13
       title: 'MIDI', // web/app.js:10
-      subtitle: 'materia en movimiento', // web/app.js:61
+      subtitle: 'mamá insiste en que deje las interfaces', // web/app.js:61, tagline changed at the owner's request
     },
     {
       id: 'portafolio',
