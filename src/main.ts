@@ -30,6 +30,8 @@ const routes: RouteSpec[] = buildRoutes(site);
 const scenes: Scene[] = routes.map((route) => route.scene);
 
 const world = must<HTMLElement>('#world');
+// ?hover=flip compares against the previous gesture; invert is the default.
+world.dataset['hover'] = new URLSearchParams(location.search).get('hover') ?? 'invert';
 const composition = must<HTMLElement>('#composition');
 const pieces = must<SVGSVGElement>('#pieces');
 const art = must<HTMLElement>('#motion-art');
