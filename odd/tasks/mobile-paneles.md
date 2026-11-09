@@ -30,7 +30,7 @@ Tab and opens with Enter or Space; `prefers-reduced-motion` keeps working.
 | ID | Specs | What | Route | Commit |
 | --- | --- | --- | --- | --- |
 | T1 | S1, S3 | A touch opens the archive work on that same touch; the mouse and the keyboard keep using `click`; a swipe or a drag never activates | inline | 9d2957c |
-| T2 | S2, S3 | The about panel becomes a full-screen reading surface on phones: sticky header with the close button, horizontal scene rail, scene stacked as image then copy | inline | — |
+| T2 | S2, S3 | The about panel becomes a full-screen reading surface on phones: sticky header with the close button, horizontal scene rail, scene stacked as image then copy | inline | eec5876 |
 | T3 | S1, S2, S3 | Phone bench at 390x844 (one tap opens, a swipe does not, the panel fits, image and copy never intersect) plus a desktop readback | inline | — |
 
 ## Log
