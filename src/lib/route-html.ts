@@ -1,11 +1,10 @@
 import type { Scene, Site } from '../content/types';
-import { counterLabel, type RouteSpec } from './routes';
+import { type RouteSpec } from './routes';
 import { absoluteUrl, type SiteOptions } from './seo';
 
 /**
  * Build-time transform that turns the shared HTML shell into the document for
- * one route: its own title, description, heading, nav state, counter and social
- * tags.
+ * one route: its own title, description, heading, nav state and social tags.
  *
  * It is pure and throws when the shell loses a marker it depends on, so a
  * markup change surfaces as a build error instead of a silently wrong page.
@@ -105,7 +104,7 @@ function navMarkup(routes: RouteSpec[], active: RouteSpec): string {
       )}" title="${escapeHtml(route.scene.navLabel)}"${current}></a>`;
     })
     .join('');
-  return `<nav aria-label="Escenas" class="scene-map">${links}</nav>`;
+  return `<nav aria-label="Escenas" class="scene-map is-visually-hidden">${links}</nav>`;
 }
 
 /**
@@ -177,7 +176,6 @@ export function renderRouteHtml(
   html = replaceInner(html, 'reveal-body', revealMarkup(scene));
   html = replaceInner(html, 'scene-title', escapeHtml(scene.title));
   html = replaceInner(html, 'scene-subtitle', escapeHtml(scene.subtitle));
-  html = replaceInner(html, 'advance', counterLabel(scene.order, routes.length));
 
   if (options.base !== '/') {
     const prefix = options.base.replace(/\/$/, '');

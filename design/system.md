@@ -13,7 +13,6 @@ Fuentes leídas: `src/styles/style.css`, `src/lib/tokens.ts`, `web/style.css`
 | --- | --- | --- | --- |
 | `--paper` | `#f4f4f4` | Geometría de la obra, texto sobre tinta, fondo del panel | `src/styles/style.css` `:root` |
 | `--ink` | `#111111` | Fondo del mundo, texto del panel | `src/styles/style.css` `:root` |
-| — | `#777` | Borde del botón de movimiento | `src/styles/style.css` |
 | — | `#888` | Foco punteado de las zonas de click | `src/styles/style.css` |
 | — | `#000` / `#fff` | Máscaras internas del arte | `src/motion/transition.mjs` |
 
@@ -33,8 +32,7 @@ mismo. Pasa AA y AAA en ambos sentidos.
 | Firma y títulos del panel | Roboto Mono 400/500 | — | `index.html` (Google Fonts) |
 | Título de escena | hereda | `clamp(12px, 1vw, 15px)`, uppercase, tracking `.16em` | `.scene-copy h1` |
 | Subtítulo de escena | hereda | `10px` | `.scene-copy p` |
-| HUD | hereda | `9px` (coordenadas, hint) | `.coordinates`, `#whisper` |
-| Contador | hereda | `10px`, flecha `22px` | `#advance` |
+| HUD | hereda | `11px` (sugerencia) | `#whisper` |
 | Título de panel | Roboto Mono | `clamp(24px, 4vw, 55px)`, tracking `-.07em` | `#reveal h2` |
 | Cuerpo de panel | hereda | `13px / 1.8`, máximo `48ch` | `#reveal p` |
 | Links de panel | hereda | `clamp(12px, 2vw, 23px)` | `#reveal a` |
@@ -67,11 +65,8 @@ para el HUD, `5%`/`14%` para el bloque de escena, `15% 18%` para el panel,
 | Componente | Reglas |
 | --- | --- |
 | Firma | Imagen de 160px (140px bajo 650px), anclada arriba a la izquierda, posicionada por el solver de colisiones |
-| Coordenadas | Lectura de puntero, `9px`, arriba a la derecha |
-| Navegación de escenas | Cinco cuadrados de 12px con `aria-current` relleno y rotado `90deg` |
-| Hint | `#whisper`, `9px`, abajo a la izquierda |
-| Contador | `00 / 04`, botón sin fondo, flecha grande |
-| Botón de movimiento | `27px`, borde `1px #777`, alterna `Ⅱ` / `▷` |
+| Sugerencia | `#whisper`, `11px`, abajo a la izquierda. **Arranca callada**: aparece a los 7 s sin input, alternando «scroll down» (escritorio) o «deslizá» (celular) con «tocá una forma» cada 9 s, y se va con el primer gesto. Fundido de 420 ms. Con `prefers-reduced-motion` queda una línea fija; no aparece con el panel abierto ni mientras una forma tiene el foco (`src/main.ts`) |
+| Mapa de escenas | Sigue en el documento sin verse: es el enlazado interno de cada página y la ruta de teclado hacia otra escena. Aparece al `:focus-within` |
 | Panel | Papel sobre tinta, animación `unfold` de 650ms, cierre con foco devuelto |
 | Hub de contacto | La misma pieza en dos superficies: `/midi-links/` (tinta) y el panel de `/contacto/` (papel). Marca en cuadrado sólido de 96px con el isotipo invertido, título Roboto Mono, subtítulo de etiqueta, tres iconos geométricos de 46px y una tarjeta de enlace. Cero radios; sin tercer color (`src/styles/hub.css`) |
 

@@ -4,7 +4,6 @@ import { midiHub } from './content/midi-links';
 import type { Scene } from './content/types';
 import {
   buildRoutes,
-  counterLabel,
   normalizePath,
   routeIndex,
   withBase,
@@ -48,10 +47,7 @@ const cards = must<HTMLElement>('#piece-cards');
 const revealBody = must<HTMLElement>('#reveal-body');
 const titleNode = must<HTMLElement>('#scene-title');
 const subtitleNode = must<HTMLElement>('#scene-subtitle');
-const advanceButton = must<HTMLButtonElement>('#advance');
-const motionButton = must<HTMLButtonElement>('#motion');
 const closeButton = must<HTMLButtonElement>('#close');
-const coordinateNode = must<HTMLElement>('#coordinate');
 const whisperNode = must<HTMLElement>('#whisper');
 const reduced = matchMedia('(prefers-reduced-motion: reduce)');
 const narrowViewport = matchMedia('(max-width: 650px)');
@@ -76,7 +72,6 @@ let sceneIndex = 0;
 let position = 0;
 let targetPosition = 0;
 let selected = 0;
-let paused = reduced.matches;
 /** Cancels the transition in flight, if any. */
 let cancelTransition: (() => void) | undefined;
 /** Last moment the transition painted. `0` means nothing is in flight. */
@@ -407,11 +402,11 @@ function mountPieces(): void {
       }
     };
     const showLabel = (): void => {
-      whisperNode.textContent = definition?.name ?? (contactBlock ? 'Abrir los enlaces' : pieceLabel(name, narrowViewport.matches));
+      holdHint(definition?.name ?? (contactBlock ? 'Abrir los enlaces' : pieceLabel(name, narrowViewport.matches)));
       if (definition && !(narrowViewport.matches && name === 'solid-dot')) revealCard(definition.id);
     };
     const clearLabel = (): void => {
-      whisperNode.textContent = site.hint ?? '';
+      releaseHint();
       if (definition && !(narrowViewport.matches && name === 'solid-dot')) concealCard(definition.id);
     };
     piece.addEventListener('pointerenter', showLabel);
@@ -507,12 +502,11 @@ function setScene(animate = true): void {
   const data = currentScene();
   titleNode.textContent = data.title;
   subtitleNode.textContent = data.subtitle;
-  advanceButton.innerHTML = counterLabel(sceneIndex, routes.length);
   document.querySelectorAll('.scene-map a').forEach((link, index) => {
     if (index === sceneIndex) link.setAttribute('aria-current', 'page');
     else link.removeAttribute('aria-current');
   });
-  const shouldAnimate = animate && !paused && !reduced.matches && position !== targetPosition;
+  const shouldAnimate = animate && !reduced.matches && position !== targetPosition;
   // The labels and the artwork must start and finish together, so the label
   // transition duration is derived from the same number the animation uses.
   const labelScale = transitionTimeScale(position, targetPosition);
@@ -924,24 +918,125 @@ function advance(direction: number): void {
   if (target) navigate(target.path);
 }
 
-advanceButton.onclick = () => advance(1);
+/**
+ * The only navigation voice the HUD has left, and it starts silent: the visitor
+ * gets the artwork first. After a while without touching anything, the line
+ * appears with the two ways of moving and fades between them; any input sends it
+ * away again and restarts the clock.
+ */
+const IDLE_BEFORE_SUGGESTION_MS = 7000;
+const SUGGESTION_INTERVAL_MS = 9000;
+/** Long enough to read as a breath, short enough not to flash. */
+const SUGGESTION_FADE_MS = 420;
+/** `pointermove` fires far faster than the HUD needs to react. */
+const ACTIVITY_THROTTLE_MS = 250;
 
-function syncMotionButton(): void {
-  motionButton.textContent = paused ? '▷' : 'Ⅱ';
-  motionButton.setAttribute('aria-label', paused ? 'Activar movimiento' : 'Pausar movimiento');
+/** `false` shows the navigation line, `true` the artwork one. */
+let showingArtworkSuggestion = false;
+/** The line is on screen because nobody has moved for a while. */
+let suggestionVisible = false;
+let suggestionTimer: number | undefined;
+let idleTimer: number | undefined;
+let fadeTimer: number | undefined;
+let lastActivityAt = -Infinity;
+/** A hovered or focused piece owns the hint while it lasts. */
+let hintHeld = false;
+
+function navigationSuggestion(): string {
+  return narrowViewport.matches ? site.suggestions.swipe : site.suggestions.scroll;
 }
 
-motionButton.onclick = () => {
-  paused = !paused;
-  syncMotionButton();
-  if (paused) setScene(false);
-};
+function currentSuggestion(): string {
+  return showingArtworkSuggestion ? site.suggestions.artwork : navigationSuggestion();
+}
 
-world.addEventListener('pointermove', (event) => {
-  coordinateNode.textContent = `${String(Math.round(event.clientX)).padStart(3, '0')} : ${String(
-    Math.round(event.clientY),
-  ).padStart(3, '0')}`;
-});
+function hideHint(): void {
+  window.clearTimeout(fadeTimer);
+  fadeTimer = undefined;
+  whisperNode.classList.remove('is-visible');
+}
+
+function fadeHint(text: string): void {
+  window.clearTimeout(fadeTimer);
+  whisperNode.classList.remove('is-visible');
+  fadeTimer = window.setTimeout(() => {
+    whisperNode.textContent = text;
+    whisperNode.classList.add('is-visible');
+  }, reduced.matches ? 0 : SUGGESTION_FADE_MS);
+}
+
+function scheduleIdleSuggestion(): void {
+  window.clearTimeout(idleTimer);
+  idleTimer = window.setTimeout(revealSuggestion, IDLE_BEFORE_SUGGESTION_MS);
+}
+
+function revealSuggestion(): void {
+  // Reading a panel is already guided by the panel itself; try again later.
+  if (!reveal.hidden || hintHeld) {
+    scheduleIdleSuggestion();
+    return;
+  }
+  suggestionVisible = true;
+  showingArtworkSuggestion = false;
+  whisperNode.textContent = currentSuggestion();
+  whisperNode.classList.add('is-visible');
+  if (reduced.matches) return;
+  window.clearInterval(suggestionTimer);
+  suggestionTimer = window.setInterval(cycleSuggestion, SUGGESTION_INTERVAL_MS);
+}
+
+/**
+ * Any input means the visitor is moving on their own: the suggestion steps
+ * aside and its clock starts over. A piece under the pointer keeps its own
+ * name on screen; that name is the hint while it lasts.
+ */
+function noteActivity(): void {
+  const now = performance.now();
+  if (now - lastActivityAt < ACTIVITY_THROTTLE_MS) return;
+  lastActivityAt = now;
+  window.clearInterval(suggestionTimer);
+  suggestionTimer = undefined;
+  if (!hintHeld) {
+    suggestionVisible = false;
+    hideHint();
+  }
+  scheduleIdleSuggestion();
+}
+
+function cycleSuggestion(): void {
+  // A panel on screen or a piece under the pointer is already talking.
+  if (!reveal.hidden || hintHeld || document.hidden) return;
+  showingArtworkSuggestion = !showingArtworkSuggestion;
+  fadeHint(currentSuggestion());
+}
+
+/** On load, under reduced motion and on a media change the HUD starts silent. */
+function startSuggestions(): void {
+  window.clearTimeout(idleTimer);
+  window.clearInterval(suggestionTimer);
+  suggestionTimer = undefined;
+  suggestionVisible = false;
+  showingArtworkSuggestion = false;
+  hintHeld = false;
+  lastActivityAt = -Infinity;
+  hideHint();
+  scheduleIdleSuggestion();
+}
+
+/** A piece under the pointer or the focus owns the line while it lasts. */
+function holdHint(text: string): void {
+  hintHeld = true;
+  whisperNode.textContent = text;
+  whisperNode.classList.add('is-visible');
+}
+
+function releaseHint(): void {
+  hintHeld = false;
+  if (suggestionVisible) {
+    whisperNode.textContent = currentSuggestion();
+    whisperNode.classList.add('is-visible');
+  } else hideHint();
+}
 
 let lastWheel = -Infinity;
 world.addEventListener(
@@ -1090,9 +1185,8 @@ document.addEventListener('keydown', (event) => {
 });
 
 reduced.addEventListener('change', () => {
-  paused = reduced.matches;
-  syncMotionButton();
-  if (paused) setScene(false);
+  if (reduced.matches) setScene(false);
+  startSuggestions();
 });
 
 addEventListener('popstate', () => setScene());
@@ -1102,6 +1196,7 @@ narrowViewport.addEventListener('change', () => {
     [...lockedPieces].filter((name) => isLockedPiece(name, narrowViewport.matches)),
   );
   mountPieces();
+  if (!hintHeld && suggestionVisible) whisperNode.textContent = currentSuggestion();
 });
 addEventListener('resize', () => {
   placeLabels(sceneIndex);
@@ -1112,7 +1207,12 @@ document.fonts.ready.then(() => {
   if (!cancelTransition) placeLabels(sceneIndex);
 });
 
-if (site.hint) whisperNode.textContent = site.hint;
+// Any input means the visitor is moving on their own: the suggestion hides and
+// its clock starts over. These run on the window, so a panel scroll counts too.
+for (const type of ['pointermove', 'pointerdown', 'wheel', 'keydown', 'touchstart'] as const) {
+  addEventListener(type, noteActivity, { passive: true });
+}
+
 adoptLegacyHash();
-syncMotionButton();
 setScene(false);
+startSuggestions();
