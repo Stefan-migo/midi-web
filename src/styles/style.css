@@ -128,3 +128,72 @@
 #reveal-body.work-switching { opacity: 0; transition: opacity 160ms ease; }
 #reveal-body:not(.work-switching) { transition: opacity 160ms ease; }
 @media(max-width:650px) { #reveal-body { grid-template-columns: minmax(0,1fr); gap: 18px; } #reveal-body .work-header, #reveal-body .work-navigation { grid-column: 1; } #reveal-body .work-media { grid-column: 1; grid-row: 2; } #reveal-body .work-details { grid-column: 1; grid-row: 3; } #reveal-body .work-navigation { grid-row: 4; } #reveal-body .work-metadata { grid-template-columns: max-content minmax(0,1fr); } #reveal-body .work-navigation { flex-wrap: wrap; } }
+
+/* Nosotros carousel: a separate content renderer inside the shared reveal
+   shell; archive work markup and its navigation remain independent. */
+/* A reading route needs a wider panel than the archive's card grid: at the
+   default inset the copy column ends up too narrow and the text never fits. */
+#reveal:has(.about-panel) { inset: 9% 9%; padding: 3.5% 4%; }
+#reveal-body:has(.about-panel) { display: block; height: 100%; min-height: 0; }
+.about-panel {
+  height: 100%; min-height: 0; display: grid;
+  grid-template-columns: minmax(105px, 22%) minmax(0, 1fr);
+  grid-template-rows: auto auto minmax(0, 1fr);
+  gap: 12px 5%;
+}
+.about-header { grid-column: 1 / -1; display: flex; align-items: center; gap: 16px; min-width: 0; }
+.about-kicker, .about-count { margin: 0; font-size: 10px; line-height: 1.5; letter-spacing: .12em; text-transform: uppercase; }
+.about-kicker { flex: 1; }
+.about-count { white-space: nowrap; }
+.about-panel > h2 { grid-column: 1 / -1; margin: 0 !important; }
+.about-rail {
+  grid-column: 1; grid-row: 3; display: flex; flex-direction: column;
+  align-self: stretch; border-top: 1px solid var(--ink);
+}
+.about-rail-button {
+  border: 0; border-bottom: 1px solid var(--ink); background: transparent;
+  color: var(--ink); padding: 12px 6px; text-align: left;
+  font: inherit; font-size: 10px; letter-spacing: .04em;
+}
+.about-rail-button[aria-current="true"] { background: var(--ink); color: var(--paper); }
+.about-scene {
+  grid-column: 2; grid-row: 3; min-width: 0; min-height: 0; overflow: hidden;
+  display: grid; align-content: stretch; opacity: 1; transform: none; height: 100%;
+  animation: about-scene-in 300ms cubic-bezier(.16, 1, .3, 1) both;
+}
+@keyframes about-scene-in { from { opacity: 0; transform: translateX(24px); } to { opacity: 1; transform: none; } }
+.about-scene--sobre { grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); align-items: stretch; gap: 26px; }
+.about-copy { min-width: 0; min-height: 0; overflow: auto; padding-right: 8px; }
+.about-copy p { margin: 0 0 12px; font-size: 13px; line-height: 1.75; }
+.about-lines { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 0 16px; list-style: none; margin: 12px 0 0; padding: 0; }
+.about-lines li { border-top: 1px solid var(--ink); padding: 7px 0; font-size: 10px; line-height: 1.45; }
+/* `#reveal img` is more specific than a plain class: the photograph of the Sobre
+   scene has to fill its column instead of being contained and centred by it. */
+#reveal .about-image { display: block; width: 100%; height: 100%; min-height: 0; max-height: none; margin: 0; object-fit: cover; }
+.about-roster { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); align-self: center; gap: 10px 16px; }
+.about-member { min-height: 76px; border-top: 1px solid var(--ink); padding: 8px 4px; position: relative; }
+.about-member-number { font-size: 9px; letter-spacing: .1em; }
+.about-member p { margin: 5px 0 0; font-size: 11px; }
+.about-note { grid-column: 1 / -1; margin: 4px 0 0; font-size: 10px; letter-spacing: .06em; }
+.about-scene--integrantes { display: block; }
+.about-statement { display: flex; flex-direction: column; justify-content: center; gap: 20px; }
+.about-statement p { margin: 0; max-width: 47ch; font: 400 clamp(18px, 2vw, 27px)/1.45 "Roboto Mono", monospace; letter-spacing: -.035em; }
+/* The close button stays in the header, where the panel puts it, and is big
+   enough to read and to hit on a phone. */
+#reveal .about-header #close { position: static; margin: -10px -6px 0 16px; padding: 0 4px; font-size: 40px; line-height: 1; min-width: 44px; min-height: 44px; }
+.about-live { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+@media (max-width: 760px) {
+  .about-panel { grid-template-columns: 92px minmax(0,1fr); gap: 10px 14px; }
+  .about-kicker, .about-count { font-size: 8px; }
+  .about-rail-button { padding: 10px 4px; font-size: 9px; }
+  .about-scene--sobre { grid-template-columns: minmax(0,1fr); align-content: start; gap: 12px; }
+  #reveal .about-image { grid-row: 1; height: min(32vh, 220px); min-height: 0; }
+  .about-copy p { font-size: 10px; line-height: 1.55; }
+  .about-lines { grid-template-columns: 1fr; }
+  .about-member { min-height: 65px; }
+  .about-member p { font-size: 9px; }
+  .about-statement p { font-size: clamp(16px, 3.4vw, 22px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .about-scene { animation: none !important; opacity: 1; transform: none; }
+}
