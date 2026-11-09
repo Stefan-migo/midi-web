@@ -129,6 +129,22 @@
 #reveal-body:not(.work-switching) { transition: opacity 160ms ease; }
 @media(max-width:650px) { #reveal-body { grid-template-columns: minmax(0,1fr); gap: 18px; } #reveal-body .work-header, #reveal-body .work-navigation { grid-column: 1; } #reveal-body .work-media { grid-column: 1; grid-row: 2; } #reveal-body .work-details { grid-column: 1; grid-row: 3; } #reveal-body .work-navigation { grid-row: 4; } #reveal-body .work-metadata { grid-template-columns: max-content minmax(0,1fr); } #reveal-body .work-navigation { flex-wrap: wrap; } }
 
+/* The archive panel is the same reading surface as the about panel on a phone:
+   it takes the whole viewport instead of floating as a card at 15% inset, the
+   header with its × is sticky, and the work keeps its own navigation at the
+   bottom. `:has(.work-header)` scopes it: the about panel has its own block. */
+@media (max-width: 760px) {
+  #reveal:has(.work-header) { inset: 0; border-width: 0; outline: none; padding: 0; }
+  #reveal:has(.work-header) #reveal-body { padding: 0 18px calc(env(safe-area-inset-bottom, 0px) + 24px); }
+  #reveal-body .work-header {
+    position: sticky; top: 0; z-index: 2; align-items: center;
+    margin: 0 -18px; padding: calc(env(safe-area-inset-top, 0px) + 10px) 18px 9px;
+    background: var(--paper); border-bottom: 1px solid var(--ink);
+  }
+  #reveal-body .work-eyebrow { margin: 0; }
+  #reveal .work-header #close { margin: 0 -6px 0 12px; padding: 0 4px; font-size: 34px; line-height: 1; min-width: 44px; min-height: 44px; }
+}
+
 /* Nosotros carousel: a separate content renderer inside the shared reveal
    shell; archive work markup and its navigation remain independent. */
 /* A reading route needs a wider panel than the archive's card grid: at the
