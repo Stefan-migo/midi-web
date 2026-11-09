@@ -197,3 +197,13 @@ when there is nothing to scroll, at 360x640 a vertical swipe with room to scroll
 new scene starts at `scrollTop` 0, a horizontal swipe on the artwork changes
 route, and the work panel opens focused too. The other two benches still pass
 (33 and 13 asserts) and `npm run verify` is green.
+
+L20 (verification, RDD): the native review of this candidate
+(`review-b29bcb6b5a498c3c`, readability + reliability, medium tier, 141 changed
+lines) is **approved** and its receipt is burned. Two informational,
+non-blocking findings point at the boundary read of the panel gesture
+(`src/main.ts:973-978`): R2-001 (readability) and R3-001 (reliability). They open
+no correction and are later work; one of them is worth naming here: the flags are
+read at `touchstart`, so a gesture that starts while the panel is still
+decelerating sees the position of that instant — the first swipe stops the
+momentum instead of turning the scene, which is the behaviour we want.
