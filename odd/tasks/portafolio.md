@@ -146,3 +146,9 @@ frame. The defs live on `#hit-regions`, not on `#pieces`, because `mountPieces`
 empties `#pieces` on every scene change. `check-motion.mjs` now pins the mask
 region, the crop mapping and the viewBox against each piece's `from` bounds, and
 fails on a one-character drift.
+
+L7 (design, modal opening): `design/midi-modal-obras/` holds three directions for
+how the panel opens — `01-el-bloque-se-abre`, `02-franjas-de-proyeccion`,
+`03-el-bloque-se-recompone`. All three start from the clicked piece instead of
+from the centre of the screen, which is what T3 was asking for. The owner picks
+one; the other two stay as alternatives.

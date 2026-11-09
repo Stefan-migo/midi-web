@@ -75,3 +75,56 @@
 #world .signature, #world .scene-copy { top: 0; left: 0; }
 #world[data-label-motion] .signature { transition: transform var(--label-ms, 1250ms) cubic-bezier(.45, 0, .55, 1); }
 #world[data-label-motion] .scene-copy { transition: transform var(--label-ms, 1250ms) cubic-bezier(.45, 0, .55, 1); }
+
+/* Direction C: four paper slices fly out of the clicked piece and become the
+   panel's 2px hairline, then the panel itself opens between that hairline and
+   its 10px ink border. The panel keeps its own paper, border, close button and
+   scroll behaviour; only the clip moves. */
+.archive-frame-edge { position: fixed; z-index: 10; pointer-events: none; background: var(--paper); }
+#reveal.archive-motion { animation: none; clip-path: inset(50% 0 50% 0); transition: clip-path 340ms cubic-bezier(.16, 1, .3, 1) 340ms; }
+#reveal.archive-motion.archive-opening { clip-path: inset(0); }
+#reveal.archive-motion.archive-closing { clip-path: inset(50% 0 50% 0); transition: clip-path 180ms ease; }
+/* Only the first four blocks stagger in; everything after them is painted from
+   the start, so no part of a work can be left invisible. */
+#reveal.archive-motion.archive-opening #reveal-body > *:nth-child(1) { animation: archive-content-in 440ms cubic-bezier(.16, 1, .3, 1) 520ms both; }
+#reveal.archive-motion.archive-opening #reveal-body > *:nth-child(2) { animation: archive-content-in 440ms cubic-bezier(.16, 1, .3, 1) 560ms both; }
+#reveal.archive-motion.archive-opening #reveal-body > *:nth-child(3) { animation: archive-content-in 440ms cubic-bezier(.16, 1, .3, 1) 620ms both; }
+#reveal.archive-motion.archive-opening #reveal-body > *:nth-child(4) { animation: archive-content-in 440ms cubic-bezier(.16, 1, .3, 1) 680ms both; }
+@keyframes archive-content-in { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+#reveal.archive-reduced { animation: none !important; clip-path: none !important; transition: none !important; }
+@media(prefers-reduced-motion:reduce) {
+  .archive-frame-edge { display: none; }
+  #reveal.archive-motion, #reveal.archive-motion.archive-opening, #reveal.archive-motion.archive-closing { clip-path: none; transition: none; }
+  #reveal.archive-motion #reveal-body > * { animation: none !important; opacity: 1; transform: none; }
+}
+
+/* Standard two-column work detail: media leads on small screens. */
+#reveal-body { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px 5%; align-items: start; }
+#reveal-body .work-header, #reveal-body .work-navigation { grid-column: 1 / -1; }
+#reveal-body .work-header { display: flex; align-items: flex-start; justify-content: space-between; min-height: 30px; }
+#reveal-body .work-eyebrow { margin: 0; font-size: 9px; line-height: 1.6; letter-spacing: .12em; text-transform: uppercase; }
+#reveal #close { position: static; flex: 0 0 auto; margin: -14px -14px 0 16px; }
+#reveal-body .work-media { grid-column: 1; grid-row: 2; margin: 0; min-width: 0; }
+#reveal-body .work-media--photo .work-image-frame { aspect-ratio: 3 / 2; }
+#reveal-body .work-media--graphic .work-image-frame { aspect-ratio: 3 / 4; }
+#reveal-body .work-image-frame { position: relative; width: 100%; overflow: hidden; background: var(--paper); }
+#reveal-body .work-image { position: absolute; inset: 0; display: block; width: 100%; height: 100%; }
+#reveal-body .work-media--photo .work-image { object-fit: cover; }
+#reveal-body .work-media--graphic .work-image { object-fit: contain; }
+#reveal-body .work-credit { margin: 9px 0 0; font: 400 9px/1.6 "DM Mono", monospace; text-transform: uppercase; letter-spacing: .12em; }
+#reveal-body .work-details { grid-column: 2; grid-row: 2; min-width: 0; }
+#reveal-body h2 { margin: 0 0 20px; font: 400 clamp(28px, 3.6vw, 52px)/.95 "Roboto Mono", monospace; letter-spacing: -.06em; }
+#reveal-body .work-metadata { display: grid; grid-template-columns: max-content minmax(0,1fr); gap: 6px 18px; margin: 0 0 22px; font-size: 11px; line-height: 1.5; text-transform: uppercase; }
+#reveal-body .work-metadata dt { letter-spacing: .08em; }
+#reveal-body .work-metadata dd { margin: 0; }
+#reveal-body .work-copy { max-width: 62ch; margin: 0 0 14px; font-size: 13px; line-height: 1.85; }
+#reveal-body .work-installations { margin: 24px 0 0; border-top: 1px solid var(--ink); padding-top: 12px; }
+#reveal-body .work-installations h3 { margin: 0 0 8px; font: 500 11px "Roboto Mono", monospace; text-transform: uppercase; letter-spacing: .08em; }
+#reveal-body .work-installations ul { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 0 22px; margin: 0; padding: 0; list-style: none; }
+#reveal-body .work-installations li { border-bottom: 1px solid var(--ink); padding: 7px 0; font-size: 11px; line-height: 1.5; }
+#reveal-body .work-navigation { display: flex; align-items: center; justify-content: space-between; gap: 12px; border-top: 1px solid var(--ink); padding-top: 14px; margin-top: 10px; }
+#reveal-body .work-navigation button { border: 0; background: transparent; color: var(--ink); padding: 8px 0; font-size: 10px; text-transform: uppercase; letter-spacing: .04em; }
+#reveal-body .work-count { font-size: 10px; white-space: nowrap; }
+#reveal-body.work-switching { opacity: 0; transition: opacity 160ms ease; }
+#reveal-body:not(.work-switching) { transition: opacity 160ms ease; }
+@media(max-width:650px) { #reveal-body { grid-template-columns: minmax(0,1fr); gap: 18px; } #reveal-body .work-header, #reveal-body .work-navigation { grid-column: 1; } #reveal-body .work-media { grid-column: 1; grid-row: 2; } #reveal-body .work-details { grid-column: 1; grid-row: 3; } #reveal-body .work-navigation { grid-row: 4; } #reveal-body .work-metadata { grid-template-columns: max-content minmax(0,1fr); } #reveal-body .work-navigation { flex-wrap: wrap; } }

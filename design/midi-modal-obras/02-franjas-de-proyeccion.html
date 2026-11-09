@@ -1,0 +1,289 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>02 · Franjas de proyección — apertura del panel de obra</title>
+<style>
+  :root {
+    --paper: #f4f4f4;
+    --ink: #111111;
+    --ease-out: cubic-bezier(.16, 1, .3, 1);
+    --bands: 9;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0; background: var(--ink); color: var(--paper);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    overflow: hidden;
+  }
+  #board { position: relative; height: 100svh; min-height: 620px; overflow: hidden; }
+
+  .hud { position: absolute; z-index: 4; display: flex; gap: 22px; font-size: 10px; letter-spacing: .16em; text-transform: uppercase; }
+  .hud--top { top: 26px; left: 30px; }
+  .hud b { font-weight: 500; }
+  .hud .dim { opacity: .6; }
+
+  .piece {
+    position: absolute; background: var(--paper); color: var(--ink);
+    border: 0; padding: 0; cursor: crosshair; font: inherit; font-size: 11px;
+    letter-spacing: .12em; text-transform: uppercase;
+    display: flex; align-items: flex-end;
+    transition: opacity .24s ease, transform .3s var(--ease-out);
+  }
+  .piece > span { padding: 0 10px 8px; opacity: 0; transition: opacity .24s ease; }
+  .piece:hover > span, .piece:focus-visible > span { opacity: 1; }
+  .piece:focus-visible { outline: 2px dashed var(--paper); outline-offset: 6px; }
+  .piece--faded { opacity: .16; }
+  #p1 { left: 6%;  top: 22%; width: 30%; height: 92px; }
+  #p2 { left: 40%; top: 22%; width: 54%; height: 92px; }
+  #p3 { left: 6%;  top: 36%; width: 22%; height: 190px; }
+  #p4 { left: 32%; top: 36%; width: 30%; height: 190px; }
+  #p5 { left: 66%; top: 36%; width: 28%; height: 190px; }
+
+  /* --- the panel: a field of paper bands -------------------------------- */
+  #panel {
+    position: absolute; z-index: 5; inset: 10% 12%;
+    visibility: hidden; pointer-events: none;
+  }
+  #panel.is-open { visibility: visible; pointer-events: auto; }
+
+  .frame {
+    position: absolute; inset: 0; opacity: 0;
+    box-shadow: 0 0 0 10px var(--ink), 0 0 0 12px var(--paper);
+    transition: opacity .3s ease;
+  }
+  .is-open .frame { opacity: 1; transition-delay: .62s; }
+
+  .bands { position: absolute; inset: 0; overflow: hidden; }
+  .band {
+    position: absolute; left: 0; width: 100%; background: var(--paper);
+    transform: scaleY(0);
+    transition: transform .34s var(--ease-out);
+    /* Each band waits for the ones between it and the block: the block is the cause. */
+    transition-delay: var(--delay, 0ms);
+  }
+  .is-open .band { transform: scaleY(1); }
+  #panel:not(.is-open) .band { transition-duration: .2s; transition-timing-function: ease-in; }
+
+  .content {
+    position: absolute; inset: 0; z-index: 2; color: var(--ink);
+    padding: 40px 46px 34px;
+    display: grid; grid-template-rows: auto auto 1fr auto; gap: 24px;
+    clip-path: inset(0 0 100% 0);
+    transition: clip-path .46s var(--ease-out) .58s;
+  }
+  .is-open .content { clip-path: inset(0 0 0 0); }
+  #panel:not(.is-open) .content { transition: clip-path .18s ease-in; transition-delay: 0s; }
+
+  .content > * { opacity: 0; transform: translateY(14px); }
+  .is-open .content > * { opacity: 1; transform: none; transition: opacity .3s ease, transform .44s var(--ease-out); }
+  .is-open .content > *:nth-child(1) { transition-delay: .66s; }
+  .is-open .content > *:nth-child(2) { transition-delay: .70s; }
+  .is-open .content > *:nth-child(3) { transition-delay: .76s; }
+  .is-open .content > *:nth-child(4) { transition-delay: .82s; }
+
+  .kicker { display: flex; justify-content: space-between; gap: 20px; font-size: 10px; letter-spacing: .18em; text-transform: uppercase; }
+  .kicker .rule { flex: 1; border-top: 1px solid var(--ink); transform: translateY(-4px); }
+  h1 { margin: 0; font-weight: 400; letter-spacing: -.06em; line-height: .94; font-size: clamp(34px, 5.4vw, 70px); }
+  .body-grid { display: grid; grid-template-columns: 1.1fr .9fr; gap: 32px; min-height: 0; }
+  .body-grid p { margin: 0 0 14px; font-size: 13px; line-height: 1.85; max-width: 46ch; }
+  .body-grid p:last-child { margin-bottom: 0; }
+  .plate { border: 1px solid var(--ink); display: flex; flex-direction: column; min-height: 0; margin: 0; }
+  .plate .shot {
+    flex: 1; min-height: 110px;
+    background:
+      repeating-linear-gradient(0deg, rgba(17,17,17,.16) 0 1px, transparent 1px 6px),
+      linear-gradient(200deg, #cfcfcf, #9d9d9d 60%, #232323);
+  }
+  .plate figcaption { border-top: 1px solid var(--ink); padding: 8px 10px; font-size: 9px; letter-spacing: .14em; text-transform: uppercase; opacity: .8; }
+  .foot { display: flex; justify-content: space-between; align-items: baseline; gap: 20px; border-top: 1px solid var(--ink); padding-top: 14px; font-size: 10px; letter-spacing: .16em; text-transform: uppercase; }
+  .foot button { font: inherit; letter-spacing: inherit; text-transform: inherit; background: none; border: 1px solid var(--ink); padding: 10px 16px; cursor: pointer; color: var(--ink); }
+  .foot button:hover { background: var(--ink); color: var(--paper); }
+  .foot button:focus-visible { outline: 2px dashed var(--ink); outline-offset: 4px; }
+
+  .hint { position: absolute; z-index: 4; bottom: 26px; right: 30px; font-size: 10px; letter-spacing: .16em; text-transform: uppercase; opacity: .6; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .band { transition-duration: 1ms !important; transition-delay: 0s !important; }
+    .content, .content > *, .frame { transition-duration: 1ms !important; transition-delay: 0s !important; }
+  }
+</style>
+</head>
+<body>
+<main id="board">
+  <div class="hud hud--top">
+    <span><b>02</b> · Franjas de proyección</span>
+    <span class="dim">Dirección B</span>
+  </div>
+
+  <button class="piece" id="p1" data-work="midi4all"><span>MIDI4all</span></button>
+  <button class="piece" id="p2" data-work="artelogia"><span>Arteología digital</span></button>
+  <button class="piece" id="p3" data-work="reforma"><span>Reafirmá la Reforma</span></button>
+  <button class="piece" id="p4" data-work="cadena"><span>Cadena de memorias</span></button>
+  <button class="piece" id="p5" data-work="borges"><span>Borges</span></button>
+
+  <section id="panel" role="dialog" aria-modal="true" aria-labelledby="panel-title" aria-hidden="true">
+    <div class="bands" aria-hidden="true"></div>
+    <div class="frame" aria-hidden="true"></div>
+    <div class="content">
+      <div class="kicker">
+        <span id="panel-kicker">2025 · Noche de los Museos, CCUNC</span>
+        <span class="rule" aria-hidden="true"></span>
+        <span id="panel-index">01 / 05</span>
+      </div>
+      <h1 id="panel-title">Arteología digital</h1>
+      <div class="body-grid">
+        <div id="panel-copy"></div>
+        <figure class="plate">
+          <div class="shot" aria-hidden="true"></div>
+          <figcaption id="panel-shot">foto · IMG_0728.jpg</figcaption>
+        </figure>
+      </div>
+      <div class="foot">
+        <span id="panel-meta">Video generativo · proyección sobre ventanas</span>
+        <button id="close" type="button">Cerrar · Esc</button>
+      </div>
+    </div>
+  </section>
+
+  <p class="hint">Click en un bloque · Esc para cerrar</p>
+</main>
+
+<script>
+  const works = {
+    midi4all: {
+      kicker: '2025 · 990 Arte Club, Córdoba',
+      title: 'MIDI4all',
+      copy: [
+        'Proyecto artístico audiovisual concebido como un espacio de experimentación contemporánea y creación multidisciplinar, abierto a artistas que encuentren en MIDI4all un espacio de participación activa.',
+        'En cada presentación realizamos una selección previa de piezas que sirven como punto de partida para la construcción de un paisaje sonoro en vivo: sonido, visuales, pintura y otras expresiones.',
+      ],
+      shot: 'foto · DSC5869.jpg',
+      meta: 'Live set audiovisual',
+    },
+    artelogia: {
+      kicker: '2025 · Noche de los Museos, CCUNC',
+      title: 'Arteología digital',
+      copy: [
+        'Visible desde el exterior a través de las ventanas del Refectorio, la instalación propone un acto de arteología: una práctica que fusiona las herramientas del arte contemporáneo con los métodos de la arqueología del patrimonio.',
+        'La obra utiliza la inteligencia artificial como herramienta para excavar en la memoria histórica, y da rostro y movimiento a las labores fundacionales de la Manzana Jesuítica.',
+      ],
+      shot: 'foto · IMG_0728.jpg',
+      meta: 'Video generativo · proyección sobre ventanas',
+    },
+    reforma: {
+      kicker: '2026 · Centro Cultural UNC',
+      title: 'Reafirmá la Reforma',
+      copy: [
+        'El espacio del Refectorio reúne dos instalaciones que marcan el punto de unión del recorrido artístico: un collage audiovisual proyectado sobre el muro posterior y esta instalación interactiva, retroproyectada sobre la puerta del mismo.',
+        'Propone el gesto simbólico de plasmar la propia firma sobre una versión digital del acta de 1918, sumando cada huella individual a un mismo documento colectivo.',
+      ],
+      shot: 'foto · DSC01479.jpg',
+      meta: 'Instalación interactiva · retroproyección',
+    },
+    cadena: {
+      kicker: '2025 · Noche de los Museos, CCUNC',
+      title: 'Cadena de memorias',
+      copy: [
+        'Un espacio de reflexión y homenaje a la memoria de las personas esclavizadas, cuyo trabajo forzado fue fundamental para construir y sostener el patrimonio jesuítico.',
+        'Una gran máscara escultórica unida a una cadena cobra vida a través de un videomapping que proyecta expresiones, rostros y grabados de culturas originarias.',
+      ],
+      shot: 'foto · IMG_0796.jpg',
+      meta: 'Escultura · videomapping',
+    },
+    borges: {
+      kicker: '2026 · Noche de los Museos, CCUNC',
+      title: 'Borges o la coincidencia de los opuestos',
+      copy: [
+        'Una intervención en la explanada que acompaña las microcharlas de La Botica, y un collage colectivo interactivo en el Refectorio: el público interviene la composición desde su celular.',
+        'El punto de partida es la posibilidad de que elementos aparentemente opuestos se encuentren, se reflejen y se transformen.',
+      ],
+      shot: 'render · explanada',
+      meta: 'Escenografía · instalación interactiva',
+    },
+  };
+
+  const BANDS = 9;
+  const panel = document.getElementById('panel');
+  const bandsHost = panel.querySelector('.bands');
+  const pieceEls = [...document.querySelectorAll('.piece')];
+  const closeBtn = document.getElementById('close');
+  let opener = null;
+
+  // Bands are built once; their delays are computed per opening.
+  for (let i = 0; i < BANDS; i += 1) {
+    const band = document.createElement('div');
+    band.className = 'band';
+    band.style.top = (i * 100 / BANDS) + '%';
+    band.style.height = (100 / BANDS) + '%';
+    bandsHost.append(band);
+  }
+  const bandEls = [...bandsHost.children];
+
+  function paint(work, index) {
+    document.getElementById('panel-kicker').textContent = work.kicker;
+    document.getElementById('panel-title').textContent = work.title;
+    document.getElementById('panel-copy').innerHTML = work.copy.map((p) => `<p>${p}</p>`).join('');
+    document.getElementById('panel-shot').textContent = work.shot;
+    document.getElementById('panel-meta').textContent = work.meta;
+    document.getElementById('panel-index').textContent = index;
+  }
+
+  function open(piece) {
+    const work = works[piece.dataset.work];
+    if (!work) return;
+    opener = piece;
+    paint(work, String(pieceEls.indexOf(piece) + 1).padStart(2, '0') + ' / 05');
+
+    // The block decides where the curtain starts: bands open outward from its line.
+    const panelRect = panel.getBoundingClientRect();
+    const pieceRect = piece.getBoundingClientRect();
+    const originY = pieceRect.top + pieceRect.height / 2;
+    const reach = Math.max(originY - panelRect.top, panelRect.bottom - originY);
+
+    bandEls.forEach((band, i) => {
+      const bandRect = band.getBoundingClientRect();
+      const bandY = bandRect.top + bandRect.height / 2;
+      const distance = Math.abs(bandY - originY);
+      const delay = reach ? Math.round((distance / reach) * 240) : 0;
+      band.style.setProperty('--delay', delay + 'ms');
+      // Bands above the block grow upward, those below grow downward.
+      band.style.transformOrigin = bandY < originY ? 'bottom' : 'top';
+    });
+
+    panel.setAttribute('aria-hidden', 'false');
+    panel.classList.add('is-open');
+    pieceEls.forEach((el) => el.classList.toggle('piece--faded', el !== piece));
+    piece.setAttribute('aria-expanded', 'true');
+    closeBtn.focus({ preventScroll: true });
+  }
+
+  function close() {
+    if (!panel.classList.contains('is-open')) return;
+    panel.classList.remove('is-open');
+    panel.setAttribute('aria-hidden', 'true');
+    pieceEls.forEach((el) => el.classList.remove('piece--faded'));
+    if (opener) {
+      opener.setAttribute('aria-expanded', 'false');
+      opener.focus({ preventScroll: true });
+    }
+    const onEnd = (event) => {
+      if (event.propertyName !== 'transform') return;
+      panel.style.visibility = 'hidden';
+      panel.removeEventListener('transitionend', onEnd);
+    };
+    panel.addEventListener('transitionend', onEnd);
+    panel.style.visibility = 'visible';
+  }
+
+  pieceEls.forEach((piece) => {
+    piece.setAttribute('aria-expanded', 'false');
+    piece.addEventListener('click', () => open(piece));
+  });
+  closeBtn.addEventListener('click', close);
+  addEventListener('keydown', (event) => { if (event.key === 'Escape') close(); });
+</script>
+</body>
+</html>

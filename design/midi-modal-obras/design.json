@@ -1,0 +1,28 @@
+{
+  "title": "Apertura del panel de obra",
+  "brief": "Cómo se abre el panel de una obra del archivo: la pieza deja de ser decoración y se convierte en el contenedor de su propia información, sin romper la identidad (dos colores, rectángulos, cero radios, mono).",
+  "feature": "odd/tasks/portafolio-obras.md",
+  "artboards": [
+    {
+      "file": "01-el-bloque-se-abre.html",
+      "title": "El bloque se abre",
+      "tradeoff": "La pieza es literalmente el panel: crece desde su propio rect y el texto se revela recortado por el borde que avanza. Lectura inmediata de causa-efecto; el riesgo es que se lea como un zoom mecánico si el timing no está fino.",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "file": "02-franjas-de-proyeccion.html",
+      "title": "Franjas de proyección",
+      "tradeoff": "El bloque abre una cortina de nueve franjas que se despliegan hacia afuera desde su línea, y el contenido sube después. Es la dirección más afín a la obra del colectivo (proyección, videomapping) y la más espectacular; el riesgo es que el gesto compita con la obra.",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "file": "03-el-bloque-se-recompone.html",
+      "title": "El bloque se recompone",
+      "tradeoff": "La pieza se corta en cuatro rectángulos que vuelan y se aplanan en el marco de papel, y el cuerpo del panel se abre entre ese marco y su separación de tinta. La más fiel a la identidad (descomponer y recomponer rectángulos) y la más lenta: 700ms antes del contenido.",
+      "width": 1440,
+      "height": 900
+    }
+  ]
+}

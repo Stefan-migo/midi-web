@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "chosen": "03-el-bloque-se-recompone.html",
+  "handoffs": {
+    "03-el-bloque-se-recompone.html": {
+      "status": "implemented",
+      "queued": false,
+      "sentAt": "2026-11-09T13:44:47.322Z",
+      "startedAt": null,
+      "implementedAt": "2026-11-09T13:57:39.717Z",
+      "feature": "odd/tasks/portafolio-obras.md",
+      "note": "Gesto C implementado en el panel real: cuatro rectángulos salen de la pieza y se aplanan en la hairline, el cuerpo se abre entre la hairline y su separación de 10px, el contenido entra desde 520ms. Falta la revisión visual del dueño.",
+      "previewUrl": "http://127.0.0.1:5173/portafolio/"
+    }
+  }
+}
