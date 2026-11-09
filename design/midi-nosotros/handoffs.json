@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "chosen": "01-riel-de-escenas.html",
+  "handoffs": {
+    "01-riel-de-escenas.html": {
+      "status": "in_progress",
+      "queued": false,
+      "sentAt": "2026-11-09T15:03:51.157Z",
+      "startedAt": "2026-11-09T15:04:18.705Z",
+      "implementedAt": null,
+      "note": "Implementando el riel de escenas en /nosotros/. Composición elegida: panel de altura fija con el peso repartido (la foto del grupo en Sobre, tipografía grande en Manifiesto, slots en Integrantes) para que no quede media pantalla de papel vacío.",
+      "previewUrl": "http://127.0.0.1:5173/nosotros/"
+    }
+  }
+}
