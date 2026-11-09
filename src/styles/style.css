@@ -8,7 +8,7 @@
   filter: drop-shadow(0 0 5px var(--paper));
 }
 
-#composition { overflow: hidden; touch-action: pan-x pinch-zoom; }
+#composition { overflow: hidden; touch-action: pinch-zoom; }
 #motion-art, #hit-regions { position: absolute; inset: 0; width: 100%; height: 100%; }
 #motion-art { pointer-events: none; }
 /* Flip card layer: HTML above the composition, anchored to each piece. It never
@@ -208,7 +208,9 @@
    share, and the collapsed Sobre grid left the photograph and the copy in the
    same cell, so the text sat on top of the image. */
 @media (max-width: 760px) {
-  #reveal:has(.about-panel) { inset: 0; border-width: 0; outline: none; padding: 0; }
+  /* pan-y keeps the reading scroll and the pinch, and hands the horizontal swipe
+     to the carousel handler instead of to the browser's own panning. */
+  #reveal:has(.about-panel) { inset: 0; border-width: 0; outline: none; padding: 0; touch-action: pan-y pinch-zoom; }
   /* One scroll for the whole panel: no nested scroll boxes on a phone. */
   #reveal-body:has(.about-panel) { height: auto; }
   .about-panel { display: block; height: auto; padding: 0 18px calc(env(safe-area-inset-bottom, 0px) + 24px); }

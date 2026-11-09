@@ -24,6 +24,13 @@ S4. In the user's words: "ok el modal para mobile en pantalla completa se ve
 genial. asegurate de que todos los modales de portafolio tambien se abra en
 pantalla completa"
 
+S5. In the user's words: "cuando abren se abren con la X seleccionada y se ve
+con un borde que no es necesario asegurate de arreglar eso."
+
+S6. In the user's words: "ademas en la version mobile tant el scroll vertical
+como el scroll horizontal (deslizar como en carrusel de instagram) deben servir
+para cambiar de escena."
+
 S3. Heritage: only the phone layout changes; the desktop archive, the desktop
 about panel and every other route keep their current geometry. Identity only
 (#f4f4f4 / #111111, mono, rectangles, no radii); every piece stays reachable by
@@ -36,6 +43,8 @@ Tab and opens with Enter or Space; `prefers-reduced-motion` keeps working.
 | T1 | S1, S3 | A touch opens the archive work on that same touch; the mouse and the keyboard keep using `click`; a swipe or a drag never activates | inline | 9d2957c |
 | T2 | S2, S3 | The about panel becomes a full-screen reading surface on phones: sticky header with the close button, horizontal scene rail, scene stacked as image then copy | inline | eec5876 |
 | T4 | S4 | The archive work panel is the same full-screen reading surface on phones: viewport-sized panel, sticky header with the ×, its own navigation at the bottom | inline | — |
+| T5 | S5, S3 | The panel takes the focus when it opens instead of the close button, so no focus ring is painted on the ×; the Tab trap follows | inline | — |
+| T6 | S6, S3 | Swipe carousel: horizontal swipe on the artwork and inside the about panel, plus a vertical swipe inside the panel when it has no room left to scroll | inline | — |
 | T3 | S1, S2, S3 | Phone bench at 390x844 (one tap opens, a swipe does not, the panel fits, image and copy never intersect) plus a desktop readback | inline | — |
 
 ## Log
@@ -149,3 +158,52 @@ size sweep (360x640, 430x932, reduced motion). `npm run verify` green.
 L15 (verification, RDD): the native review of the archive panel candidate
 (`review-23ae08c91ea9eef3`, readability + reliability, medium tier, 38 changed
 lines) is **approved with no findings** and its receipt is burned.
+
+L16 (user, verbatim): "ok lo vi me gusta. pero cuando abren se abren con la X
+seleccionada y se ve con un borde que no es necesario asegurate de arreglar eso.
+ademas en la version mobile tant el scroll vertical como el scroll horizontal
+(deslizar como en carrusel de instagram) deben servir para cambiar de escena."
+
+L17 (diagnosis, S5): `openContent` ended with `closeButton.focus()`, so the panel
+opened with the × focused and Chrome/Safari painted our dashed
+`:focus-visible` ring on top of it. The focus target is now the panel itself
+(`#reveal` with `tabindex="-1"`), which is also what a dialog should do: a screen
+reader reads the panel's own `aria-labelledby` title instead of a button label.
+The decorative hairline of the panel is an author `outline`, so it stays, and no
+focus ring is added. Two traps came out of this: `inert` on the artwork queues a
+focus fixup that lands *after* the frame and drops the dialog's focus to `<body>`,
+so the panel re-asserts it in a `setTimeout(0)`; and the Tab trap needed cases for
+"focus is on the panel itself".
+
+L18 (decision, S6): the gestures turn the carousel, chosen axis by axis.
+- On the artwork, both axes change scene; the dominant one wins. `touch-action`
+  went from `pan-x pinch-zoom` to `pinch-zoom` so the browser does not claim the
+  horizontal gesture.
+- Inside the about panel, a horizontal swipe always turns the scene (the
+  Instagram gesture the owner named); a vertical swipe turns it only when the
+  panel has no room left to scroll that way, read at `touchstart` before the
+  gesture moves anything. Reading a long scene is never interrupted, which is the
+  only way both sentences of S6 can hold at once.
+- `touch-action: pan-y pinch-zoom` on the panel keeps the reading scroll and the
+  pinch and hands the horizontal to the handler.
+- A scene switch now resets the panel's scroll to the first line, because the
+  panel is one scroller and the previous position leaked into the next scene.
+
+L19 (evidence): a dedicated gesture bench drives real touch input. 14 asserts,
+0 failures: the panel takes the focus and the × paints no ring (phone and
+desktop), horizontal swipe left/right turns the scene, a vertical swipe turns it
+when there is nothing to scroll, at 360x640 a vertical swipe with room to scroll
+*reads* (`scrollTop` 265, same scene) and only at the bottom turns the scene, a
+new scene starts at `scrollTop` 0, a horizontal swipe on the artwork changes
+route, and the work panel opens focused too. The other two benches still pass
+(33 and 13 asserts) and `npm run verify` is green.
+
+L20 (verification, RDD): the native review of this candidate
+(`review-b29bcb6b5a498c3c`, readability + reliability, medium tier, 141 changed
+lines) is **approved** and its receipt is burned. Two informational,
+non-blocking findings point at the boundary read of the panel gesture
+(`src/main.ts:973-978`): R2-001 (readability) and R3-001 (reliability). They open
+no correction and are later work; one of them is worth naming here: the flags are
+read at `touchstart`, so a gesture that starts while the panel is still
+decelerating sees the position of that instant — the first swipe stops the
+momentum instead of turning the scene, which is the behaviour we want.

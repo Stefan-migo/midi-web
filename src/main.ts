@@ -38,6 +38,10 @@ const pieces = must<SVGSVGElement>('#pieces');
 const hitRegions = must<SVGSVGElement>('#hit-regions');
 const art = must<HTMLElement>('#motion-art');
 const reveal = must<HTMLElement>('#reveal');
+// The panel takes the focus when it opens, not the close button: a programmatic
+// focus on the × paints its focus ring before anyone has touched the keyboard,
+// and a dialog focus is what scrolls a screen reader to the panel's own title.
+reveal.tabIndex = -1;
 const cards = must<HTMLElement>('#piece-cards');
 const revealBody = must<HTMLElement>('#reveal-body');
 const titleNode = must<HTMLElement>('#scene-title');
@@ -701,6 +705,9 @@ function renderAboutScene(index: number, announce = false): void {
   header.append(closeButton);
   root.append(header, title, rail, content, live);
   revealBody.replaceChildren(root);
+  // The panel is one scroller, so a scene switch starts at the first line
+  // instead of inheriting the position of the previous scene.
+  reveal.scrollTop = 0;
   reveal.setAttribute('aria-labelledby', 'reveal-title');
 }
 
@@ -757,7 +764,14 @@ function openContent(index: number, work?: ArchiveCard, opener?: SVGRectElement,
   reveal.setAttribute('role', 'dialog');
   reveal.setAttribute('aria-modal', 'true');
   reveal.setAttribute('aria-hidden', 'false');
-  closeButton.focus();
+  reveal.focus({ preventScroll: true });
+  // Making the artwork `inert` queues a focus fixup that runs right after this
+  // task and drops the dialog's focus to <body>, because the piece that was
+  // focused a moment ago just stopped being interactive. The panel asserts the
+  // focus once more after that fixup.
+  setTimeout(() => {
+    if (!reveal.hidden && !reveal.contains(document.activeElement)) reveal.focus({ preventScroll: true });
+  }, 0);
 }
 
 function changeArt(step: number): void {
@@ -909,12 +923,16 @@ world.addEventListener(
   { passive: false },
 );
 
-let touchOrigin: number | undefined;
+// A swipe moves between scenes on both axes: vertical is the original gesture,
+// horizontal is the carousel one, and the dominant axis decides when both move.
+const SWIPE_PX = 55;
+const PANEL_SWIPE_PX = 60;
+let artworkTouch: { x: number; y: number } | undefined;
 composition.addEventListener(
   'touchstart',
   (event) => {
     const touch = event.touches[0];
-    if (event.touches.length === 1 && touch) touchOrigin = touch.clientY;
+    if (event.touches.length === 1 && touch) artworkTouch = { x: touch.clientX, y: touch.clientY };
   },
   { passive: true },
 );
@@ -922,16 +940,64 @@ composition.addEventListener(
   'touchend',
   (event) => {
     const touch = event.changedTouches[0];
-    if (touchOrigin === undefined || !touch) return;
-    const distance = touchOrigin - touch.clientY;
-    touchOrigin = undefined;
-    if (Math.abs(distance) > 55) advance(Math.sign(distance));
+    const origin = artworkTouch;
+    artworkTouch = undefined;
+    if (!origin || !touch) return;
+    const dx = origin.x - touch.clientX;
+    const dy = origin.y - touch.clientY;
+    if (Math.max(Math.abs(dx), Math.abs(dy)) < SWIPE_PX) return;
+    advance(Math.abs(dx) > Math.abs(dy) ? Math.sign(dx) : Math.sign(dy));
   },
   { passive: true },
 );
 composition.addEventListener('touchcancel', () => {
-  touchOrigin = undefined;
+  artworkTouch = undefined;
 });
+
+/**
+ * Inside the about panel the same two gestures turn the carousel: a horizontal
+ * swipe always does, and a vertical swipe only when the panel has no room left
+ * to scroll that way — so reading a long scene is never interrupted by a scene
+ * change. The boundary is read at touchstart, before the scroll of this gesture
+ * has moved anything.
+ */
+let panelTouch: { x: number; y: number; atTop: boolean; atBottom: boolean } | undefined;
+reveal.addEventListener(
+  'touchstart',
+  (event) => {
+    const touch = event.touches[0];
+    if (!aboutPanelOpen || event.touches.length !== 1 || !touch) return;
+    panelTouch = {
+      x: touch.clientX,
+      y: touch.clientY,
+      atTop: reveal.scrollTop <= 0,
+      atBottom: reveal.scrollTop + reveal.clientHeight >= reveal.scrollHeight - 1,
+    };
+  },
+  { passive: true },
+);
+reveal.addEventListener('touchcancel', () => {
+  panelTouch = undefined;
+});
+reveal.addEventListener(
+  'touchend',
+  (event) => {
+    const touch = event.changedTouches[0];
+    const origin = panelTouch;
+    panelTouch = undefined;
+    if (!origin || !touch || !aboutPanelOpen) return;
+    const dx = origin.x - touch.clientX;
+    const dy = origin.y - touch.clientY;
+    if (Math.abs(dx) > PANEL_SWIPE_PX && Math.abs(dx) > Math.abs(dy)) {
+      renderAboutScene(aboutSceneIndex + Math.sign(dx), true);
+      return;
+    }
+    if (Math.abs(dy) > PANEL_SWIPE_PX && ((dy > 0 && origin.atBottom) || (dy < 0 && origin.atTop))) {
+      renderAboutScene(aboutSceneIndex + Math.sign(dy), true);
+    }
+  },
+  { passive: true },
+);
 
 /**
  * Internal navigation is intercepted so the scene transition survives a page
@@ -978,10 +1044,11 @@ document.addEventListener('keydown', (event) => {
     const first = focusable[0];
     const last = focusable[focusable.length - 1];
     if (!first || !last) return;
-    if (event.shiftKey && document.activeElement === first) {
+    const active = document.activeElement;
+    if (event.shiftKey && (active === first || active === reveal || !reveal.contains(active))) {
       event.preventDefault();
       last.focus();
-    } else if (!event.shiftKey && document.activeElement === last) {
+    } else if (!event.shiftKey && (active === last || !reveal.contains(active))) {
       event.preventDefault();
       first.focus();
     }
