@@ -130,6 +130,9 @@ function mountPieces(): void {
         image.decoding = 'async';
         back.append(image);
       }
+      // Without a photo the card is plain paper with ink text; the dark scrim
+      // only exists to make white text readable over an image.
+      if (definition.image) back.classList.add('has-image');
       const scrim = document.createElement('span');
       scrim.className = 'scrim';
       const text = document.createElement('span');
@@ -141,7 +144,8 @@ function mountPieces(): void {
       cardSubtitle.className = 'card-subtitle';
       cardSubtitle.textContent = definition.subtitle;
       text.append(cardTitle, cardSubtitle);
-      back.append(scrim, text);
+      if (definition.image) back.append(scrim);
+      back.append(text);
       card.append(front, back);
       cards.append(card);
       cardElements.set(definition.id, card);
@@ -289,8 +293,10 @@ function layoutCards(): void {
     if (!Number.isFinite(left)) continue;
     const rawWidth = right - left;
     const rawHeight = bottom - top;
-    const width = Math.max(rawWidth, 132);
-    const height = Math.max(rawHeight, 104);
+    // Six pixels of air so the card covers the highlight behind it instead of
+    // leaving a stray rim around the edge.
+    const width = Math.max(rawWidth, 132) + 6;
+    const height = Math.max(rawHeight, 104) + 6;
     const x = left - origin.left + (rawWidth - width) / 2;
     const y = top - origin.top + (rawHeight - height) / 2;
     card.style.width = `${width}px`;
