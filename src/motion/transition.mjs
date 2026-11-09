@@ -16,7 +16,7 @@ M833 972.5H1000.5V1090H833Z M852.5 992H981V1090H852.5Z"/>`;
 
 // Each row maps an independently clipped piece from Scene 1 to the reference artwork.
 // Bounds are [left, top, right, bottom]; arcs add a small offset during travel.
-const pieces = [
+export const pieces = [
   {name: 'solid-cap', from: [127, 115, 372, 209.825], to: [116, 593, 577, 786], delay: 9, arc: -65},
   {name: 'solid-left', from: [127, 209.825, 222, 420], to: [76, 166, 272, 594.5], delay: 2, arc: -40},
   {name: 'solid-right', from: [258, 209.825, 373, 420], to: [346, 166, 538, 594.5], delay: 5, arc: 50},
@@ -39,6 +39,25 @@ const targetArt = `<g fill="#fff">${targetSolid}${targetOutline}</g>`;
 const pieceMasks = pieces.map(({name, from, to}) => `
   <mask id="source-${name}" x="0" y="0" width="1" height="1" maskUnits="userSpaceOnUse">${crop(from, sourceArt)}</mask>
   <mask id="target-${name}" x="0" y="0" width="1" height="1" maskUnits="userSpaceOnUse">${crop(to, targetArt)}</mask>`).join('');
+
+/**
+ * Masks painting only the paper of one piece at rest. The hit boxes are
+ * partitions of the artwork, so a highlight shaped like the box reads as a
+ * frame around the piece; one masked by these grows from the piece's own
+ * silhouette instead. Coordinates are the composition's, and the mask sits on
+ * the piece bounds so scaling the element scales the silhouette with it.
+ */
+export function silhouetteMasks(names) {
+  return pieces
+    .filter(({name}) => names.includes(name))
+    .map(({name, from}) => {
+      const [left, top, right, bottom] = from;
+      const width = right - left;
+      const height = bottom - top;
+      return `<mask id="silhouette-${name}" maskUnits="userSpaceOnUse" x="${left}" y="${top}" width="${width}" height="${height}"><g transform="translate(${left} ${top}) scale(${width} ${height})">${crop(from, sourceArt)}</g></mask>`;
+    })
+    .join('');
+}
 
 function animatePiece(piece, frame, sourceScaleX = 1, sourceScaleY = 1) {
   const {name, from, to, delay, arc} = piece;

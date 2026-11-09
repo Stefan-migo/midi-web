@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
-import { renderPosition, playBetween, transitionDurationMs } from '../src/motion/site-motion.mjs';
+import { renderPosition, playBetween, transitionDurationMs, regions } from '../src/motion/site-motion.mjs';
+import { pieces, silhouetteMasks } from '../src/motion/transition.mjs';
 
 const positions = [0, 0.3, 0.5, 0.78, 0.79, 1, 1.5, 2, 2.5, 3, 3.5, 4];
 for (const position of positions) {
@@ -111,6 +112,20 @@ assert.ok(
 // The signature and the scene copy read their transition duration from this same
 // number. If the two drift apart, the labels arrive before the artwork, which is
 // exactly what the owner saw.
+// The archive components in `src/main.ts` read their names from the motion
+// engine's piece table and their boxes from `regions[1]`, in order. Those two
+// lists must not drift apart, or a component would carry another piece's name.
+assert.equal(
+  regions[1].length,
+  pieces.length,
+  `portafolio has ${regions[1].length} hit regions but ${pieces.length} named pieces`,
+);
+assert.equal(
+  new Set(pieces.map((piece) => piece.name)).size,
+  pieces.length,
+  'piece names must be unique',
+);
+
 const frameMs = 1000 / 30;
 const tolerance = 3 * frameMs;
 for (const [from, to, scale] of [
@@ -128,7 +143,37 @@ for (const [from, to, scale] of [
     `${from}→${to}: labels would run ${Math.round(declared)}ms but the artwork takes ${Math.round(actual)}ms`,
   );
 }
+// The archive highlights a locked piece with its own silhouette, so the mask has
+// to sit exactly on the piece bounds: an offset or a wrong scale would paint the
+// neighbouring crop area instead of the piece.
+const lockedNames = ['solid-cap', 'solid-dot'];
+const maskMarkup = silhouetteMasks(lockedNames);
+for (const name of lockedNames) {
+  const entry = pieces.find((candidate) => candidate.name === name);
+  assert.ok(entry, `${name}: missing from the piece table`);
+  const [left, top, right, bottom] = entry.from;
+  const width = right - left;
+  const height = bottom - top;
+  const mask = new RegExp(`<mask id="silhouette-${name}"[\\s\\S]*?</mask>`).exec(maskMarkup)?.[0];
+  assert.ok(mask, `${name}: no silhouette mask emitted`);
+  const region = /x="(-?[\d.]+)" y="(-?[\d.]+)" width="(-?[\d.]+)" height="(-?[\d.]+)"/.exec(mask);
+  assert.ok(region, `${name}: mask has no region`);
+  const actual = region.slice(1).map(Number);
+  const expected = [left, top, width, height];
+  assert.deepEqual(
+    actual.map((value) => Math.round(value * 1000) / 1000),
+    expected.map((value) => Math.round(value * 1000) / 1000),
+    `${name}: mask region must match the piece bounds`,
+  );
+  assert.ok(
+    mask.includes(`translate(${left} ${top}) scale(${width} ${height})`),
+    `${name}: the crop must be mapped onto the piece bounds`,
+  );
+  assert.ok(mask.includes(`viewBox="${left} ${top} ${width} ${height}"`), `${name}: crop viewBox must match the piece bounds`);
+  assert.ok(mask.includes('overflow="hidden"'), `${name}: the crop must be clipped to its box`);
+}
+
 console.log(
   `check-motion: 12 renders, 8 directed transitions, 4 early-timestamp transitions, ` +
-    `2 compressed wraps and 5 duration-parity checks OK`,
+    `2 compressed wraps, 5 duration-parity checks and 2 silhouette masks OK`,
 );

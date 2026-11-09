@@ -95,10 +95,11 @@ export default defineConfig(({ mode }) => {
     },
     server: {
       watch: {
-        // These hold brand material and design sources, not app code. Watching
-        // them crashed the dev server: the identity PDF is open in a viewer and
-        // Windows answers EBUSY on the watch handle.
-        ignored: ['**/Docs/**', '**/MIDI/**', '**/design/**'],
+        // These hold brand material, design sources and image assets, not app
+        // code. Watching them crashed the dev server: Windows answers EBUSY while
+        // a PDF or an image is open in a viewer or still being copied. Static
+        // assets do not need HMR.
+        ignored: ['**/Docs/**', '**/MIDI/**', '**/design/**', '**/public/assets/**'],
       },
     },
   };
