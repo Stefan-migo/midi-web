@@ -1,0 +1,27 @@
+{
+  "title": "Panel de Nosotros",
+  "brief": "El panel de /nosotros/ como carrusel de tres escenas —sobre, integrantes y manifiesto— abierto con el mismo gesto que el archivo.",
+  "artboards": [
+    {
+      "file": "01-riel-de-escenas.html",
+      "title": "Riel de escenas",
+      "tradeoff": "La estructura es siempre visible y la escena es calmada; el panel pierde ancho para el contenido.",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "file": "02-corrimiento-horizontal.html",
+      "title": "Corrimiento horizontal",
+      "tradeoff": "El movimiento hace obvio el carrusel y funciona con swipe; una escena larga puede necesitar su propio scroll, que compite con el gesto.",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "file": "03-escenas-apiladas.html",
+      "title": "Escenas apiladas",
+      "tradeoff": "Nunca oculta contenido y se lee como un documento impreso; el carrusel es menos obvio y una rueda rápida puede saltar una escena.",
+      "width": 1440,
+      "height": 900
+    }
+  ]
+}

@@ -1,4 +1,5 @@
 import { site } from './content/site';
+import { aboutScenes } from './content/about';
 import type { Scene } from './content/types';
 import {
   buildRoutes,
@@ -83,6 +84,8 @@ function transitionTimeScale(from: number, to: number): number {
   return distance <= 1 ? 1 : WRAP_TOTAL_MS / (distance * SEGMENT_MS);
 }
 let returnFocus: HTMLElement | SVGElement | undefined;
+let aboutPanelOpen = false;
+let aboutSceneIndex = 0;
 let archiveSourceRect: DOMRect | undefined;
 let archiveFrameEdges: HTMLDivElement[] = [];
 let archiveAnimationRun = 0;
@@ -378,6 +381,8 @@ function mountPieces(): void {
       const target = routeAt(sceneIndex === 0 ? 1 : sceneIndex);
       if (sceneIndex === 0) {
         if (target) navigate(target.path);
+      } else if (sceneIndex === 2) {
+        openContent(index, undefined, piece, true);
       } else if (definition) {
         openContent(index, definition, piece);
       }
@@ -557,15 +562,130 @@ function switchArchive(target: number, focusButton?: 'previous' | 'next'): void 
   }, 160);
 }
 
-function openContent(index: number, work?: ArchiveCard, opener?: SVGRectElement): void {
+function renderAboutScene(index: number, announce = false): void {
+  aboutSceneIndex = (index + aboutScenes.length) % aboutScenes.length;
+  const data = aboutScenes[aboutSceneIndex];
+  if (!data) return;
+  const root = document.createElement('div');
+  root.className = 'about-panel';
+  root.dataset['scene'] = data.id;
+
+  const header = document.createElement('header');
+  header.className = 'about-header';
+  const kicker = document.createElement('p');
+  kicker.className = 'about-kicker';
+  kicker.textContent = data.kicker;
+  const count = document.createElement('span');
+  count.className = 'about-count';
+  count.textContent = `${String(aboutSceneIndex + 1).padStart(2, '0')} / ${String(aboutScenes.length).padStart(2, '0')}`;
+  header.append(kicker, count);
+
+  const title = document.createElement('h2');
+  title.id = 'reveal-title';
+  title.textContent = data.title;
+  const rail = document.createElement('nav');
+  rail.className = 'about-rail';
+  rail.setAttribute('aria-label', 'Escenas de Nosotros');
+  aboutScenes.forEach((scene, sceneNumber) => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'about-rail-button';
+    button.textContent = `${String(sceneNumber + 1).padStart(2, '0')} ${scene.label}`;
+    if (sceneNumber === aboutSceneIndex) button.setAttribute('aria-current', 'true');
+    button.addEventListener('click', () => renderAboutScene(sceneNumber, true));
+    rail.append(button);
+  });
+
+  const content = document.createElement('section');
+  content.className = `about-scene about-scene--${data.id}`;
+  content.setAttribute('aria-labelledby', 'reveal-title');
+  const copy = document.createElement('div');
+  copy.className = 'about-copy';
+  if (data.id === 'sobre') {
+    data.paragraphs.forEach((text) => {
+      const paragraph = document.createElement('p');
+      paragraph.textContent = text;
+      copy.append(paragraph);
+    });
+    if (data.lines) {
+      const list = document.createElement('ul');
+      list.className = 'about-lines';
+      data.lines.forEach((text) => {
+        const item = document.createElement('li');
+        item.textContent = text;
+        list.append(item);
+      });
+      copy.append(list);
+    }
+    if (data.image) {
+      const image = document.createElement('img');
+      image.src = withBase(`/${data.image.src}`, base);
+      image.alt = data.image.alt;
+      image.loading = 'lazy';
+      image.decoding = 'async';
+      image.className = 'about-image';
+      content.append(image, copy);
+    } else content.append(copy);
+  } else if (data.id === 'integrantes') {
+    const roster = document.createElement('div');
+    roster.className = 'about-roster';
+    data.roster?.forEach((member, slot) => {
+      const card = document.createElement('article');
+      card.className = 'about-member';
+      const number = document.createElement('span');
+      number.className = 'about-member-number';
+      number.textContent = String(slot + 1).padStart(2, '0');
+      const name = document.createElement('p');
+      name.textContent = member.name;
+      const role = document.createElement('p');
+      role.textContent = member.role;
+      card.append(number, name, role);
+      roster.append(card);
+    });
+    content.append(roster);
+    if (data.note) {
+      const note = document.createElement('p');
+      note.className = 'about-note';
+      note.textContent = data.note;
+      content.append(note);
+    }
+  } else {
+    content.classList.add('about-statement');
+    data.paragraphs.forEach((text) => {
+      const paragraph = document.createElement('p');
+      paragraph.textContent = text;
+      content.append(paragraph);
+    });
+  }
+
+  const live = document.createElement('span');
+  live.className = 'about-live';
+  live.setAttribute('aria-live', 'polite');
+  live.setAttribute('aria-atomic', 'true');
+  live.textContent = announce ? `${String(aboutSceneIndex + 1).padStart(2, '0')} ${data.label}` : '';
+
+  // The close button belongs to the panel chrome, not to a scene footer: at the
+  // bottom of the page it read as a caption and shrank to 10px.
+  header.append(closeButton);
+  root.append(header, title, rail, content, live);
+  revealBody.replaceChildren(root);
+  reveal.setAttribute('aria-labelledby', 'reveal-title');
+}
+
+function openContent(index: number, work?: ArchiveCard, opener?: SVGRectElement, about = false): void {
   returnFocus = opener ?? (
     document.activeElement instanceof HTMLElement || document.activeElement instanceof SVGElement
       ? document.activeElement
       : undefined
   );
   selected = index % 4;
+  aboutPanelOpen = about;
   const data = currentScene();
-  if (work) {
+  if (about) {
+    // Each block of the scene opens a different chapter, so the panel does not
+    // always start on the same page.
+    renderAboutScene(index % aboutScenes.length);
+  } else if (work) {
     renderArchiveWork(work);
   } else if (data.gallery?.length) {
     const item = data.gallery[selected % data.gallery.length];
@@ -593,9 +713,9 @@ function openContent(index: number, work?: ArchiveCard, opener?: SVGRectElement)
   for (const sibling of [...world.children]) {
     if (sibling !== reveal) (sibling as HTMLElement).inert = true;
   }
-  if (!work) reveal.append(closeButton);
+  if (!work && !about) reveal.append(closeButton);
   reveal.hidden = false;
-  if (work && opener) animateArchiveOpen(opener.getBoundingClientRect());
+  if ((work || about) && opener) animateArchiveOpen(opener.getBoundingClientRect());
   else {
     reveal.classList.remove('archive-motion', 'archive-opening', 'archive-closing', 'archive-reduced');
     clearArchiveEdges();
@@ -626,6 +746,7 @@ function changeArt(step: number): void {
 
 function closeContent(animate = true): void {
   const wasOpen = !reveal.hidden;
+  aboutPanelOpen = false;
   const closingArchiveMotion = wasOpen && animate && animateArchiveClose();
   if (!closingArchiveMotion) {
     reveal.hidden = true;
@@ -791,7 +912,10 @@ document.addEventListener('click', (event) => {
 
 document.addEventListener('keydown', (event) => {
   if (event.key === 'Escape' && !reveal.hidden) closeContent();
-  if (!reveal.hidden && reveal.classList.contains('archive-motion') && (event.key === 'ArrowLeft' || event.key === 'ArrowRight')) {
+  if (!reveal.hidden && aboutPanelOpen && (event.key === 'ArrowLeft' || event.key === 'ArrowRight')) {
+    event.preventDefault();
+    renderAboutScene(aboutSceneIndex + (event.key === 'ArrowLeft' ? -1 : 1), true);
+  } else if (!reveal.hidden && reveal.classList.contains('archive-motion') && (event.key === 'ArrowLeft' || event.key === 'ArrowRight')) {
     event.preventDefault();
     const current = archiveCards.findIndex((card) => card.title === revealBody.querySelector('#reveal-title')?.textContent);
     switchArchive(current + (event.key === 'ArrowLeft' ? -1 : 1), event.key === 'ArrowLeft' ? 'previous' : 'next');
