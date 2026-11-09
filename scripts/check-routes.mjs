@@ -178,6 +178,13 @@ for (const route of ROUTES) {
       /class="scene-map is-visually-hidden"/,
       'the scene map must stay in the document, visually hidden',
     );
+    // The HUD starts silent: the suggestion is an answer to inactivity, never a
+    // permanent caption.
+    assert.doesNotMatch(
+      html,
+      /id="whisper"[^>]*\bis-visible\b/,
+      'the suggestion must not be visible on load',
+    );
   });
 
   expect('nav links', () => {

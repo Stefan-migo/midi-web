@@ -65,7 +65,7 @@ para el HUD, `5%`/`14%` para el bloque de escena, `15% 18%` para el panel,
 | Componente | Reglas |
 | --- | --- |
 | Firma | Imagen de 160px (140px bajo 650px), anclada arriba a la izquierda, posicionada por el solver de colisiones |
-| Sugerencia | `#whisper`, `11px`, abajo a la izquierda: alterna «scroll down» (escritorio) o «deslizá» (celular) con «tocá una forma» cada 9 s, con fundido de 420 ms. Con `prefers-reduced-motion` queda una línea fija; el ciclo se calla con el panel abierto o mientras una forma tiene el foco (`src/main.ts`) |
+| Sugerencia | `#whisper`, `11px`, abajo a la izquierda. **Arranca callada**: aparece a los 7 s sin input, alternando «scroll down» (escritorio) o «deslizá» (celular) con «tocá una forma» cada 9 s, y se va con el primer gesto. Fundido de 420 ms. Con `prefers-reduced-motion` queda una línea fija; no aparece con el panel abierto ni mientras una forma tiene el foco (`src/main.ts`) |
 | Mapa de escenas | Sigue en el documento sin verse: es el enlazado interno de cada página y la ruta de teclado hacia otra escena. Aparece al `:focus-within` |
 | Panel | Papel sobre tinta, animación `unfold` de 650ms, cierre con foco devuelto |
 | Hub de contacto | La misma pieza en dos superficies: `/midi-links/` (tinta) y el panel de `/contacto/` (papel). Marca en cuadrado sólido de 96px con el isotipo invertido, título Roboto Mono, subtítulo de etiqueta, tres iconos geométricos de 46px y una tarjeta de enlace. Cero radios; sin tercer color (`src/styles/hub.css`) |

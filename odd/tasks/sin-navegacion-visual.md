@@ -15,8 +15,11 @@ S2 (dueño, verbatim): «para manejar la navegacion va a ser mucho mas sutil.
 sugerencias, que aparecen intermitentemente, scroll down, en la version mobil, se
 puede deslizar o scroll down.»
 
-S3 (dueño, verbatim): «tambien el toca una forma. debe ser una sugerencia que
-aparece intermitentemente sin ser invasivo.»
+S3 (dueño, verbatim, con la corrección de L4): «tambien el toca una forma. debe
+ser una sugerencia que aparece intermitentemente sin ser invasivo.» Y después:
+«puede ser que parta con las sugerencias ocultas y que aparezcan luego de un
+momento de inactividad. o sea el default es sin sugerencias.» El HUD arranca
+callado: la línea sale a los 7 s sin input y se va con el primer gesto.
 
 S4 (identidad y plataforma, `design/system.md` y `odd/tasks/midi-site-platform.md`):
 dos colores `#f4f4f4`/`#111111`, DM Mono y Roboto Mono, cero radios; los cinco
@@ -80,3 +83,10 @@ sugerencia arranca en «scroll down», a los 10 s dice «tocá una forma» y a l
 20 s vuelve; en 390 px dice «deslizá»; con `prefers-reduced-motion` se queda en
 una línea. El puntero sobre una forma manda sobre la sugerencia y al salir la
 devuelve. Rueda y swipe siguen cambiando de escena (`/portafolio/`).
+
+L4 (dueño, verbatim): «esta bien. pero puede ser que parta con las sugerencias
+ocultasy que aparezcan luego de un momento de inactividad. o sea el default es
+sin sugerencias.» Reabre T3 y T5: `#whisper` nace sin `is-visible`; el ciclo deja
+de arrancar solo y queda detrás de un temporizador de inactividad de 7 s que
+cualquier `pointermove`, `pointerdown`, `wheel`, `keydown` o `touchstart` reinicia
+y esconde. `check-routes` pinea que el documento construido no traiga la clase.

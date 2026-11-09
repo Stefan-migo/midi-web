@@ -919,18 +919,26 @@ function advance(direction: number): void {
 }
 
 /**
- * The only navigation voice the HUD has left. It alternates between the two
- * ways of moving — the pointer/scroll instruction and the artwork itself — and
- * fades between them, so the site never shows a permanent control.
+ * The only navigation voice the HUD has left, and it starts silent: the visitor
+ * gets the artwork first. After a while without touching anything, the line
+ * appears with the two ways of moving and fades between them; any input sends it
+ * away again and restarts the clock.
  */
+const IDLE_BEFORE_SUGGESTION_MS = 7000;
 const SUGGESTION_INTERVAL_MS = 9000;
 /** Long enough to read as a breath, short enough not to flash. */
 const SUGGESTION_FADE_MS = 420;
+/** `pointermove` fires far faster than the HUD needs to react. */
+const ACTIVITY_THROTTLE_MS = 250;
 
 /** `false` shows the navigation line, `true` the artwork one. */
 let showingArtworkSuggestion = false;
+/** The line is on screen because nobody has moved for a while. */
+let suggestionVisible = false;
 let suggestionTimer: number | undefined;
+let idleTimer: number | undefined;
 let fadeTimer: number | undefined;
+let lastActivityAt = -Infinity;
 /** A hovered or focused piece owns the hint while it lasts. */
 let hintHeld = false;
 
@@ -942,6 +950,12 @@ function currentSuggestion(): string {
   return showingArtworkSuggestion ? site.suggestions.artwork : navigationSuggestion();
 }
 
+function hideHint(): void {
+  window.clearTimeout(fadeTimer);
+  fadeTimer = undefined;
+  whisperNode.classList.remove('is-visible');
+}
+
 function fadeHint(text: string): void {
   window.clearTimeout(fadeTimer);
   whisperNode.classList.remove('is-visible');
@@ -951,6 +965,44 @@ function fadeHint(text: string): void {
   }, reduced.matches ? 0 : SUGGESTION_FADE_MS);
 }
 
+function scheduleIdleSuggestion(): void {
+  window.clearTimeout(idleTimer);
+  idleTimer = window.setTimeout(revealSuggestion, IDLE_BEFORE_SUGGESTION_MS);
+}
+
+function revealSuggestion(): void {
+  // Reading a panel is already guided by the panel itself; try again later.
+  if (!reveal.hidden || hintHeld) {
+    scheduleIdleSuggestion();
+    return;
+  }
+  suggestionVisible = true;
+  showingArtworkSuggestion = false;
+  whisperNode.textContent = currentSuggestion();
+  whisperNode.classList.add('is-visible');
+  if (reduced.matches) return;
+  window.clearInterval(suggestionTimer);
+  suggestionTimer = window.setInterval(cycleSuggestion, SUGGESTION_INTERVAL_MS);
+}
+
+/**
+ * Any input means the visitor is moving on their own: the suggestion steps
+ * aside and its clock starts over. A piece under the pointer keeps its own
+ * name on screen; that name is the hint while it lasts.
+ */
+function noteActivity(): void {
+  const now = performance.now();
+  if (now - lastActivityAt < ACTIVITY_THROTTLE_MS) return;
+  lastActivityAt = now;
+  window.clearInterval(suggestionTimer);
+  suggestionTimer = undefined;
+  if (!hintHeld) {
+    suggestionVisible = false;
+    hideHint();
+  }
+  scheduleIdleSuggestion();
+}
+
 function cycleSuggestion(): void {
   // A panel on screen or a piece under the pointer is already talking.
   if (!reveal.hidden || hintHeld || document.hidden) return;
@@ -958,16 +1010,17 @@ function cycleSuggestion(): void {
   fadeHint(currentSuggestion());
 }
 
-/** One static line under reduced motion: nothing fades in and out. */
+/** On load, under reduced motion and on a media change the HUD starts silent. */
 function startSuggestions(): void {
+  window.clearTimeout(idleTimer);
   window.clearInterval(suggestionTimer);
   suggestionTimer = undefined;
+  suggestionVisible = false;
   showingArtworkSuggestion = false;
   hintHeld = false;
-  whisperNode.textContent = currentSuggestion();
-  whisperNode.classList.add('is-visible');
-  if (reduced.matches) return;
-  suggestionTimer = window.setInterval(cycleSuggestion, SUGGESTION_INTERVAL_MS);
+  lastActivityAt = -Infinity;
+  hideHint();
+  scheduleIdleSuggestion();
 }
 
 /** A piece under the pointer or the focus owns the line while it lasts. */
@@ -979,8 +1032,10 @@ function holdHint(text: string): void {
 
 function releaseHint(): void {
   hintHeld = false;
-  whisperNode.textContent = currentSuggestion();
-  whisperNode.classList.add('is-visible');
+  if (suggestionVisible) {
+    whisperNode.textContent = currentSuggestion();
+    whisperNode.classList.add('is-visible');
+  } else hideHint();
 }
 
 let lastWheel = -Infinity;
@@ -1141,7 +1196,7 @@ narrowViewport.addEventListener('change', () => {
     [...lockedPieces].filter((name) => isLockedPiece(name, narrowViewport.matches)),
   );
   mountPieces();
-  if (!hintHeld) whisperNode.textContent = currentSuggestion();
+  if (!hintHeld && suggestionVisible) whisperNode.textContent = currentSuggestion();
 });
 addEventListener('resize', () => {
   placeLabels(sceneIndex);
@@ -1151,6 +1206,12 @@ addEventListener('resize', () => {
 document.fonts.ready.then(() => {
   if (!cancelTransition) placeLabels(sceneIndex);
 });
+
+// Any input means the visitor is moving on their own: the suggestion hides and
+// its clock starts over. These run on the window, so a panel scroll counts too.
+for (const type of ['pointermove', 'pointerdown', 'wheel', 'keydown', 'touchstart'] as const) {
+  addEventListener(type, noteActivity, { passive: true });
+}
 
 adoptLegacyHash();
 setScene(false);
