@@ -34,11 +34,9 @@
 
 #hit-regions .hit { fill: transparent; stroke: none; pointer-events: all; cursor: crosshair; }
 #hit-regions .hit:focus-visible { stroke: #888; stroke-width: 2; stroke-dasharray: 6 4; vector-effect: non-scaling-stroke; }
-#hit-regions .geometry { fill: var(--paper); fill-opacity: 0; stroke: var(--paper); stroke-width: 0; vector-effect: non-scaling-stroke; pointer-events: none; transform-box: fill-box; transform-origin: center; transition: fill-opacity .3s, stroke-width .3s, transform .3s; }
+#hit-regions .geometry { fill: var(--paper); fill-opacity: 0; stroke: var(--paper); stroke-width: 0; vector-effect: non-scaling-stroke; pointer-events: none; transition: fill-opacity .3s, stroke-width .3s; }
 #hit-regions .piece-group:hover .geometry,
 #hit-regions .piece-group:focus-within .geometry { fill-opacity: .23; stroke-width: 12; }
-/* Every block of the hovered card grows, not only the one under the pointer. */
-#hit-regions .piece-group.is-active .geometry { transform: scale(1.03); }
 [data-scene="0"] #hit-regions .piece-group:hover .geometry,
 [data-scene="0"] #hit-regions .piece-group:focus-within .geometry { stroke-width: 0; fill-opacity: 1; }
 /* Locked pieces answer with a slight growth only: no card, no flip. */
