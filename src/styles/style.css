@@ -144,6 +144,11 @@
 .about-header { grid-column: 1 / -1; display: flex; align-items: center; gap: 16px; min-width: 0; }
 .about-kicker, .about-count { margin: 0; font-size: 10px; line-height: 1.5; letter-spacing: .12em; text-transform: uppercase; }
 .about-kicker { flex: 1; }
+/* The kicker is a paragraph, and `#reveal p` caps paragraphs at 48ch: with the
+   cap in force the header's free space landed after the close button, so the ×
+   sat in the middle of the row instead of on its right edge. The kicker takes
+   the row's free space and the close button closes it. */
+#reveal .about-header .about-kicker { flex: 1 1 auto; max-width: none; }
 .about-count { white-space: nowrap; }
 .about-panel > h2 { grid-column: 1 / -1; margin: 0 !important; }
 .about-rail {
@@ -180,20 +185,49 @@
 .about-statement p { margin: 0; max-width: 47ch; font: 400 clamp(18px, 2vw, 27px)/1.45 "Roboto Mono", monospace; letter-spacing: -.035em; }
 /* The close button stays in the header, where the panel puts it, and is big
    enough to read and to hit on a phone. */
-#reveal .about-header #close { position: static; margin: -10px -6px 0 16px; padding: 0 4px; font-size: 40px; line-height: 1; min-width: 44px; min-height: 44px; }
+#reveal .about-header #close { position: static; margin: -10px -6px 0 auto; padding: 0 4px; font-size: 40px; line-height: 1; min-width: 44px; min-height: 44px; }
 .about-live { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+/* Phones: the panel stops being a card and becomes the screen. The 9% inset
+   kept ~178px of reading width at 390px once the fixed rail column took its
+   share, and the collapsed Sobre grid left the photograph and the copy in the
+   same cell, so the text sat on top of the image. */
 @media (max-width: 760px) {
-  .about-panel { grid-template-columns: 92px minmax(0,1fr); gap: 10px 14px; }
-  .about-kicker, .about-count { font-size: 8px; }
-  .about-rail-button { padding: 10px 4px; font-size: 9px; }
-  .about-scene--sobre { grid-template-columns: minmax(0,1fr); align-content: start; gap: 12px; }
-  #reveal .about-image { grid-row: 1; height: min(32vh, 220px); min-height: 0; }
-  .about-copy p { font-size: 10px; line-height: 1.55; }
-  .about-lines { grid-template-columns: 1fr; }
-  .about-member { min-height: 65px; }
-  .about-member p { font-size: 9px; }
-  .about-statement p { font-size: clamp(16px, 3.4vw, 22px); }
+  #reveal:has(.about-panel) { inset: 0; border-width: 0; outline: none; padding: 0; }
+  /* One scroll for the whole panel: no nested scroll boxes on a phone. */
+  #reveal-body:has(.about-panel) { height: auto; }
+  .about-panel { display: block; height: auto; padding: 0 18px calc(env(safe-area-inset-bottom, 0px) + 24px); }
+  .about-header {
+    position: sticky; top: 0; z-index: 2; gap: 10px;
+    margin: 0 -18px; padding: calc(env(safe-area-inset-top, 0px) + 10px) 18px 9px;
+    background: var(--paper); border-bottom: 1px solid var(--ink);
+  }
+  .about-kicker, .about-count { font-size: 9px; }
+  #reveal .about-header #close { margin: -6px -6px 0 auto; }
+  .about-panel > h2 { margin: 16px 0 14px !important; font-size: clamp(30px, 10vw, 44px); line-height: .95; }
+  /* The rail turns into three chips under the title, so it costs height instead
+     of a fifth of the reading width. */
+  .about-rail { flex-direction: row; border-top: 0; border-bottom: 1px solid var(--ink); }
+  .about-rail-button {
+    flex: 1 1 0; border-bottom: 0; border-right: 1px solid var(--ink);
+    padding: 11px 6px; text-align: center; font-size: 10px;
+  }
+  .about-rail-button:last-child { border-right: 0; }
+  /* Every scene is plain flow, painted in order: nothing can overlap. */
+  .about-scene { display: block; height: auto; overflow: visible; padding-top: 16px; animation-name: about-scene-in-phone; }
+  .about-scene--sobre { display: block; }
+  #reveal .about-image { height: auto; aspect-ratio: 4 / 3; min-height: 0; max-height: none; }
+  .about-copy { overflow: visible; padding-right: 0; }
+  .about-copy p { margin: 14px 0 0; font-size: 12px; line-height: 1.7; }
+  .about-lines { grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: 16px; }
+  .about-lines li { font-size: 10px; }
+  .about-roster { grid-template-columns: repeat(2, minmax(0, 1fr)); align-self: start; gap: 10px 14px; }
+  .about-member { min-height: 72px; }
+  .about-member p { font-size: 11px; }
+  .about-note { margin-top: 14px; }
+  .about-statement { display: flex; flex-direction: column; justify-content: flex-start; gap: 16px; }
+  .about-statement p { font-size: clamp(19px, 5.4vw, 26px); line-height: 1.4; }
 }
+@keyframes about-scene-in-phone { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) {
   .about-scene { animation: none !important; opacity: 1; transform: none; }
 }
