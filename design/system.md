@@ -53,7 +53,7 @@ para el HUD, `5%`/`14%` para el bloque de escena, `15% 18%` para el panel,
   → letterbox en cualquier proporción distinta de 4:3.
 - Alto del mundo: `100svh`, mínimo `450px`.
 - Un solo breakpoint: **650px**.
-- El panel abre con `inset: 15% 18%`.
+- El panel abre con `inset: 15% 18%`. El panel de contacto abre con `inset: 12% 24%`; bajo 760px ocupa la pantalla, como el resto de los paneles.
 
 ## Radios, sombras, bordes
 
@@ -73,6 +73,7 @@ para el HUD, `5%`/`14%` para el bloque de escena, `15% 18%` para el panel,
 | Contador | `00 / 04`, botón sin fondo, flecha grande |
 | Botón de movimiento | `27px`, borde `1px #777`, alterna `Ⅱ` / `▷` |
 | Panel | Papel sobre tinta, animación `unfold` de 650ms, cierre con foco devuelto |
+| Hub de contacto | La misma pieza en dos superficies: `/midi-links/` (tinta) y el panel de `/contacto/` (papel). Marca en cuadrado sólido de 96px con el isotipo invertido, título Roboto Mono, subtítulo de etiqueta, tres iconos geométricos de 46px y una tarjeta de enlace. Cero radios; sin tercer color (`src/styles/hub.css`) |
 
 ## Regla para los artboards
 
