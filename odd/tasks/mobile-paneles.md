@@ -83,3 +83,13 @@ three chips, and the last block of the copy is reachable. Repeated at 360x640 an
 430x932 and under `prefers-reduced-motion: reduce`. A desktop readback at
 1440x900 keeps the 9% inset, the two columns and the vertical rail, so the
 phone rules changed nothing above 760px. `npm run verify` is green.
+
+L7 (verification, RDD): the native review of this candidate (lenses readability
+and reliability, medium tier, 165 changed lines) is **approved** and its receipt
+is burned. Its only finding is informational and non-blocking — R2-001,
+readability, `src/main.ts:416-422` — so it opens no correction and is later work,
+never a reason to review this candidate again. An independent verifier
+(`gentle-ai-verify`) was launched for the item-6 declaration and could not run:
+its model provider was unavailable. No verdict exists for it, it is not retried
+or escalated, and the proof of this change stays the bench in L6 plus
+`npm run verify`, both run by the writer.
