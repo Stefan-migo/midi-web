@@ -3,8 +3,8 @@
  *
  * It asserts invariants, not copy: the copy lives in `src/content/` and is
  * allowed to change. What must hold is that each route ships its own complete
- * document with the right ordinal, heading, nav state and counter, because
- * that is what makes a section a real URL for crawlers and answer engines.
+ * document with the right ordinal, heading and nav state, because that is what
+ * makes a section a real URL for crawlers and answer engines.
  *
  * Run after `npm run build`.
  */
@@ -166,10 +166,18 @@ for (const route of ROUTES) {
     );
   });
 
-  expect('counter', () => {
-    const last = ROUTES.length - 1;
-    const counter = `0${route.order} / 0${last} <span>`;
-    assert.ok(html.includes(counter), `expected the counter "${counter.trim()}"`);
+  // The HUD's navigation is gone from the screen: no counter, no coordinates,
+  // no pause button. The scene map stays in the document, hidden, because it is
+  // the only internal link and the only keyboard path to another scene.
+  expect('hud', () => {
+    for (const removed of ['id="advance"', 'id="motion"', 'id="coordinate"', 'class="coordinates"']) {
+      assert.ok(!html.includes(removed), `the HUD still ships ${removed}`);
+    }
+    assert.match(
+      html,
+      /class="scene-map is-visually-hidden"/,
+      'the scene map must stay in the document, visually hidden',
+    );
   });
 
   expect('nav links', () => {

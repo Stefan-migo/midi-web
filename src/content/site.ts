@@ -3,7 +3,12 @@ import type { Site } from './types';
 export const site: Site = {
   name: 'MIDI', // web/index.html:2
   // TODO(T2): A sourced tagline is needed; web/index.html's description is metadata, not a tagline.
-  hint: 'tocá una forma', // web/index.html:12 (#whisper)
+  // Las dos formas de cambiar de escena, dichas en voz de HUD.
+  suggestions: {
+    scroll: 'scroll down',
+    swipe: 'deslizá',
+    artwork: 'tocá una forma',
+  },
   scenes: [
     {
       id: 'inicio',

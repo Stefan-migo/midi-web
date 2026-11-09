@@ -45,10 +45,3 @@ export function withBase(path: string, base: string): string {
   return `${base.replace(/\/$/, '')}${path}`;
 }
 
-/**
- * The reference counter reads `00 / 04`: the ordinal, then the last index.
- * Derived from the route count so it cannot drift from the scene list.
- */
-export function counterLabel(order: number, total: number): string {
-  return `0${order} / 0${total - 1} <span>↗</span>`;
-}

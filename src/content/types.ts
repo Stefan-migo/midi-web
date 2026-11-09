@@ -51,6 +51,22 @@ export interface Scene {
   gallery?: GalleryItem[];
 }
 
+/**
+ * The suggestions that cycle over the artwork, one at a time.
+ *
+ * They are the whole of the HUD's navigation voice: the reference's five
+ * squares, counter and pause button are gone, so the instruction to move is a
+ * line that appears and leaves instead of a permanent control.
+ */
+export interface SiteSuggestions {
+  /** Desktop: how the scene changes. */
+  readonly scroll: string;
+  /** Narrow viewports: the same instruction as a swipe. */
+  readonly swipe: string;
+  /** The other way in: the artwork itself is the navigation. */
+  readonly artwork: string;
+}
+
 export interface Site {
   name: string;
   /**
@@ -58,12 +74,7 @@ export interface Site {
    * see `TODO(T2)` in `./site.ts`.
    */
   tagline?: string;
-  /**
-   * The HUD hint of the reference (`web/index.html:12`, `#whisper`).
-   * Optional only because a future design may drop it; dropping it today would
-   * be a visual change to the reference.
-   */
-  hint?: string;
   /** Ordered by `order`. Exactly one scene per `SceneId`. */
   scenes: Scene[];
+  suggestions: SiteSuggestions;
 }
