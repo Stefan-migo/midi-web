@@ -38,18 +38,39 @@ body {
   overflow: hidden;
 }
 
-/* The bar reads as one editorial line: meta on top, title and state below. */
+/* The bar reads as one editorial line: the mark, then meta on top, title and
+   state below. Three columns so the mark keeps its own lane. */
 .midi-viewer-bar {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: end;
   column-gap: 16px;
   row-gap: 6px;
   padding-bottom: 14px;
 }
 
-.midi-viewer-kicker {
+.midi-viewer-brand {
   grid-column: 1;
+  grid-row: 1 / span 2;
+  align-self: center;
+  display: block;
+  margin: -6px;
+  padding: 6px;
+  transition: opacity .18s ease;
+}
+
+.midi-viewer-brand:hover {
+  opacity: .7;
+}
+
+.midi-viewer-mark {
+  display: block;
+  width: 30px;
+  height: auto;
+}
+
+.midi-viewer-kicker {
+  grid-column: 2;
   grid-row: 1;
   margin: 0;
   font-size: 10px;
@@ -59,7 +80,7 @@ body {
 }
 
 .midi-viewer-clock {
-  grid-column: 2;
+  grid-column: 3;
   grid-row: 1;
   margin: 0;
   font-size: 10px;
@@ -70,7 +91,7 @@ body {
 }
 
 .midi-viewer-title {
-  grid-column: 1;
+  grid-column: 2;
   grid-row: 2;
   margin: 0;
   font: 400 clamp(15px, 2.2vw, 22px)/1.15 "Roboto Mono", monospace;
@@ -78,7 +99,7 @@ body {
 }
 
 .midi-viewer-status {
-  grid-column: 2;
+  grid-column: 3;
   grid-row: 2;
   display: inline-flex;
   align-items: center;
@@ -178,6 +199,7 @@ body {
 }
 
 .midi-viewer-album:focus-visible,
+.midi-viewer-brand:focus-visible,
 .midi-viewer-button:focus-visible {
   outline: 2px dashed currentColor;
   outline-offset: 4px;
@@ -249,24 +271,39 @@ body {
   }
 
   .midi-viewer-bar {
-    grid-template-columns: minmax(0, 1fr);
+    grid-template-columns: auto minmax(0, 1fr);
     row-gap: 5px;
     padding-bottom: 10px;
+  }
+
+  .midi-viewer-brand {
+    grid-column: 1;
+    grid-row: 1 / span 3;
+  }
+
+  .midi-viewer-mark {
+    width: 26px;
   }
 
   .midi-viewer-clock {
     display: none;
   }
 
+  .midi-viewer-kicker {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
   .midi-viewer-title {
-    grid-column: 1;
-    grid-row: auto;
+    grid-column: 2;
+    grid-row: 2;
     font-size: 14px;
   }
 
   .midi-viewer-status {
-    grid-column: 1;
-    grid-row: auto;
+    grid-column: 2;
+    grid-row: 3;
+    justify-self: start;
     font-size: 9px;
   }
 
@@ -293,6 +330,7 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .midi-viewer-photo,
   .midi-viewer-button,
+  .midi-viewer-brand,
   .midi-viewer-album {
     transition: none !important;
     transform: none;
