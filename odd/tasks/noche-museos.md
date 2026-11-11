@@ -38,6 +38,7 @@ El primer corte quedó en 713 líneas (T1 + T2) porque el contrato de la fuente 
 - **L7** (decisión, S4): las miniaturas salen de `drive.google.com/thumbnail`, no del archivo original: Google redimensiona, convierte HEIC de teléfono y no gasta cuota de Drive.
 - **L8** (decisión, S6): `Cache-Control: public, s-maxage=10, stale-while-revalidate=60` en el proxy; los errores van con `no-store` para no cachear una caída de Drive.
 - **L9** (límite del harness): `.env.example` no se pudo escribir (política de rutas sensibles). Las variables quedan documentadas en el README y `.env` ya está ignorado por git.
+- **L10** (dueño, decisión): «Cerrar sin ella: queda documentada como prueba faltante en odd/tasks/noche-museos.md y la rama espera tu review + la key.» → la verificación independiente del item 5 no se reintenta por iniciativa propia y queda como prueba faltante P3. La rama no se declara verificada, queda a la espera de review humana y de la credencial.
 
 ## Verificación
 
@@ -57,4 +58,16 @@ Comportamiento medido sobre el build real con Chrome headless + CDP (proxy simul
 | Upstream 503 | estado `offline`, «sin conexión con el álbum · reintentando», CTA al álbum, `0 / 0` |
 | Mobile 390×844 | visor 390, escena 366×693, contador y fullscreen dentro del viewport |
 
-Pendiente de prueba real: la lectura contra la carpeta de Drive, que necesita `GOOGLE_DRIVE_API_KEY` (ver README). Sin ella el visualizador muestra el estado «sin conexión», que es el comportamiento correcto y ya está verificado.
+## Pruebas faltantes
+
+La rama **no se declara verificada**. El `Risk: item 5` (función serverless + variables de entorno en el deploy) exige una pasada independiente que no se pudo completar:
+
+| ID | Prueba | Estado | Qué la desbloquea |
+| --- | --- | --- | --- |
+| P1 | Lectura real contra la carpeta de Drive del evento | Faltante | `GOOGLE_DRIVE_API_KEY` (README, «Visualizador en vivo») |
+| P2 | La función corriendo en Vercel: headers de caché reales, env vars del proyecto | Faltante | Deploy con las variables cargadas + `curl` a `/api/fotos` |
+| P3 | Verificación independiente del item 5 | **No disponible** | Un pedido explícito de un intento nuevo cuando el proveedor vuelva |
+
+P3 detalle: `gentle-ai-verify` falló con `provider_unavailable` (caída del proveedor del subagente, no del código). Por política no se reintenta sin pedido explícito del dueño; la decisión L10 fue cerrar dejándola registrada acá.
+
+Mientras no haya credencial, el visualizador muestra el estado «sin conexión con el álbum · reintentando» con el CTA al álbum, que sí está verificado (tabla de arriba) y es el comportamiento correcto.
