@@ -18,6 +18,10 @@ const glyphs: Record<MidiLinkIcon, string> = {
   tiktok:
     '<path d="M13.6 3.4v10.2a3.6 3.6 0 1 1-3.6-3.6"/>' +
     '<path d="M13.6 3.4c.5 2.7 2.3 4.4 5.1 4.7"/>',
+  // The screen is a rectangle, so the network's rounded box reads as the same
+  // square every other mark in the site uses.
+  youtube:
+    '<rect x="2.6" y="5.4" width="18.8" height="13.2"/>' + '<path d="M10.2 9.2 15.4 12l-5.2 2.8z"/>',
 };
 
 /** The markup of one glyph, always decorative: the anchor carries the name. */

@@ -19,6 +19,7 @@ import {
   type ViewerErrorCode,
   type ViewerPhoto,
 } from '../lib/drive';
+import { withBase } from '../lib/routes';
 import '../styles/viewer.css';
 
 type ViewerStatus = 'loading' | 'live' | 'empty' | 'offline' | 'unconfigured' | 'missing';
@@ -79,6 +80,19 @@ export function mountViewer(host: HTMLElement): void {
   root.setAttribute('aria-label', liveViewer.title);
 
   const bar = el('header', 'midi-viewer-bar');
+  // The mark is the logo and the way back in one: a visitor who arrives from a
+  // shared link gets a brand, and a link home, without a second button.
+  const brand = el('a', 'midi-viewer-brand');
+  brand.href = withBase(liveViewer.home.href, import.meta.env.BASE_URL);
+  brand.setAttribute('aria-label', copy.homeLabel);
+  brand.title = liveViewer.home.label;
+  const mark = el('img', 'midi-viewer-mark');
+  mark.src = withBase('/assets/isotipo-solido-blanco.svg', import.meta.env.BASE_URL);
+  mark.alt = '';
+  mark.width = 30;
+  mark.height = 26;
+  mark.decoding = 'async';
+  brand.append(mark);
   const kicker = el('p', 'midi-viewer-kicker', liveViewer.kicker);
   const title = el('h1', 'midi-viewer-title', liveViewer.title);
   const status = el('p', 'midi-viewer-status');
@@ -88,7 +102,7 @@ export function mountViewer(host: HTMLElement): void {
   status.append(dot, statusText);
   const clock = el('p', 'midi-viewer-clock');
   clock.setAttribute('aria-live', 'off');
-  bar.append(kicker, title, status, clock);
+  bar.append(brand, kicker, title, status, clock);
 
   const stage = el('div', 'midi-viewer-stage');
   const layers = [el('img', 'midi-viewer-photo'), el('img', 'midi-viewer-photo')];

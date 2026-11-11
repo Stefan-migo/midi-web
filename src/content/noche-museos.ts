@@ -32,6 +32,8 @@ export interface LiveViewer {
   readonly refreshMs: number;
   /** How long one photo stays on screen. */
   readonly slideMs: number;
+  /** The mark is the way out: one brand, one exit, no second button. */
+  readonly home: { readonly label: string; readonly href: string };
   readonly copy: {
     readonly loading: string;
     readonly empty: string;
@@ -47,6 +49,7 @@ export interface LiveViewer {
     readonly play: string;
     readonly pause: string;
     readonly fullscreen: string;
+    readonly homeLabel: string;
   };
 }
 
@@ -74,5 +77,7 @@ export const liveViewer: LiveViewer = {
     play: 'Reanudar la reproducción',
     pause: 'Pausar la reproducción',
     fullscreen: 'Pantalla completa',
+    homeLabel: 'MIDI — ir al sitio principal',
   },
+  home: { label: 'Sitio principal', href: '/' },
 };
