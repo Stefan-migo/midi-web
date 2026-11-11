@@ -44,7 +44,7 @@ export interface MidiHub {
 
 export const midiHub: MidiHub = {
   name: 'MIDI',
-  subtitle: 'Colectivo artístico multimedial',
+  subtitle: 'Colectivo artístico',
   kicker: '/links',
   panelKicker: 'MIDI · contacto',
   links: [
