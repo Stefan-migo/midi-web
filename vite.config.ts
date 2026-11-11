@@ -90,7 +90,7 @@ export default defineConfig(({ mode }) => {
     plugins: [prerenderRoutes(base, siteUrl), devRoutes()],
     build: {
       rollupOptions: {
-        input: ['index.html', 'midi-links/index.html', 'midi-links/add/index.html'],
+        input: ['index.html', 'midi-links/index.html', 'midi-links/add/index.html', 'midi-links/noche-museos/index.html'],
       },
     },
     server: {
