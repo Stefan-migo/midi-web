@@ -723,7 +723,6 @@ function renderContactHub(): void {
     surface: 'paper',
     kicker: midiHub.panelKicker,
     headingId: 'reveal-title',
-    placement: 'panel',
   });
   hub.prepend(closeButton);
   revealBody.replaceChildren(hub);

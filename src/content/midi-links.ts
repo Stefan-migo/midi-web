@@ -8,13 +8,12 @@
  * Sources: the owner's link page (logo, subtitle, icon row, cards under them)
  * and the contact scene in `./site.ts`.
  *
- * The live-viewer card of Noche de los museos belongs to the hidden page only:
- * the contact panel reuses this component and the `contacto-hub` feature kept
- * event links out of it on purpose.
+ * The page and the panel show the same thing, on purpose: the owner asked for
+ * them to stay in sync, so nothing here is filtered per surface any more.
  */
 
 /** The glyph drawn for one network. `src/lib/icons.ts` owns each drawing. */
-export type MidiLinkIcon = 'instagram' | 'mail' | 'tiktok';
+export type MidiLinkIcon = 'instagram' | 'mail' | 'tiktok' | 'youtube';
 
 export interface MidiLink {
   readonly label: string;
@@ -29,11 +28,6 @@ export interface MidiLink {
 export interface MidiHubCard {
   readonly label: string;
   readonly href: string;
-  /**
-   * Keeps the card on `/midi-links/` and off the `/contacto/` panel, which
-   * mounts the same hub on the opposite surface.
-   */
-  readonly onlyOnPage?: boolean;
 }
 
 export interface MidiHub {
@@ -72,12 +66,17 @@ export const midiHub: MidiHub = {
       icon: 'tiktok',
       note: '@midi4all',
     },
+    {
+      label: 'YouTube',
+      href: 'https://www.youtube.com/@holamidi',
+      icon: 'youtube',
+      note: '@holamidi',
+    },
   ],
   cards: [
     {
       label: 'Noche de los museos 2026',
       href: '/midi-links/noche-museos/',
-      onlyOnPage: true,
     },
     { label: 'Sitio principal', href: '/' },
   ],

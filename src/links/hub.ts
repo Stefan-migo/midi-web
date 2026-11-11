@@ -18,11 +18,6 @@ export interface HubOptions {
   readonly surface: HubSurface;
   /** The label voice above the mark; the panel and the page use different ones. */
   readonly kicker?: string;
-  /**
-   * Which surface of the design this mount is. A card marked `onlyOnPage` is
-   * content of the hidden page only, never of the contact panel.
-   */
-  readonly placement: 'page' | 'panel';
   /** `1` when the hub is the page, `2` when it is the panel's content. */
   readonly headingLevel?: 1 | 2;
   /** The panel labels its dialog with this id. */
@@ -98,8 +93,8 @@ export function renderMidiHub(options: HubOptions): HTMLElement {
 
   const list = document.createElement('ul');
   list.className = 'midi-hub-links';
+  // Both surfaces render the whole list: the page and the panel are one truth.
   for (const entry of midiHub.cards) {
-    if (entry.onlyOnPage && options.placement !== 'page') continue;
     const item = document.createElement('li');
     const card = document.createElement('a');
     card.className = 'midi-hub-card';
