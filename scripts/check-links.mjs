@@ -5,6 +5,7 @@ const root = path.resolve('dist');
 const documents = [
   ['dist/midi-links/index.html', 'midi-links/index.html'],
   ['dist/midi-links/add/index.html', 'midi-links/add/index.html'],
+  ['dist/midi-links/noche-museos/index.html', 'midi-links/noche-museos/index.html'],
 ];
 
 async function fail(file, message) {
@@ -30,6 +31,13 @@ if (add && !add.includes('Esta página no guarda nada.')) await fail(documents[1
 // carry its mount point, like every other document carries #reveal-body.
 const hub = content.get('midi-links/index.html');
 if (hub && !/id="hub"/.test(hub)) await fail(documents[0][0], 'missing the #hub mount the shared contact hub renders into');
+// The live viewer is a second standalone document: one mount point and its own
+// bundled entry, so the show never depends on the motion scene of the site.
+const viewer = content.get('midi-links/noche-museos/index.html');
+if (viewer && !/id="viewer"/.test(viewer))
+  await fail(documents[2][0], 'missing the #viewer mount the live viewer renders into');
+if (viewer && !/<script[^>]+type="module"[^>]+src="[^"]+\.js"/.test(viewer))
+  await fail(documents[2][0], 'missing its bundled module entry');
 for (const relative of ['sitemap.xml', 'llms.txt']) {
   const file = `dist/${relative}`;
   try {

@@ -9,9 +9,10 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "check:routes": "node scripts/check-routes.mjs",
-    "verify": "npm run typecheck && npm run build && npm run check:routes && npm run check:motion && npm run check:links",
+    "verify": "npm run typecheck && npm run build && npm run check:routes && npm run check:motion && npm run check:links && npm run check:viewer",
     "check:motion": "node scripts/check-motion.mjs",
-    "check:links": "node scripts/check-links.mjs"
+    "check:links": "node scripts/check-links.mjs",
+    "check:viewer": "node scripts/check-viewer-api.mjs"
   },
   "devDependencies": {
     "typescript": "^5.7.3",

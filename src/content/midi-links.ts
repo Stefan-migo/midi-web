@@ -5,9 +5,12 @@
  * `/midi-links/` page and the panel that every block of `/contacto/` opens — so
  * the page and the modal can never drift apart.
  *
- * Sources: the owner's link page (logo, subtitle, icon row, one card to the
- * site) and the contact scene in `./site.ts`. The event links of the reference
- * are deliberately absent.
+ * Sources: the owner's link page (logo, subtitle, icon row, cards under them)
+ * and the contact scene in `./site.ts`.
+ *
+ * The live-viewer card of Noche de los museos belongs to the hidden page only:
+ * the contact panel reuses this component and the `contacto-hub` feature kept
+ * event links out of it on purpose.
  */
 
 /** The glyph drawn for one network. `src/lib/icons.ts` owns each drawing. */
@@ -22,6 +25,17 @@ export interface MidiLink {
   readonly note?: string;
 }
 
+/** One card under the icons: a destination of the hub. */
+export interface MidiHubCard {
+  readonly label: string;
+  readonly href: string;
+  /**
+   * Keeps the card on `/midi-links/` and off the `/contacto/` panel, which
+   * mounts the same hub on the opposite surface.
+   */
+  readonly onlyOnPage?: boolean;
+}
+
 export interface MidiHub {
   readonly name: string;
   readonly subtitle: string;
@@ -30,8 +44,8 @@ export interface MidiHub {
   /** The label voice of the panel inside the site. */
   readonly panelKicker: string;
   readonly links: readonly MidiLink[];
-  /** The one card under the icons: the way back to the site. */
-  readonly home: { readonly label: string; readonly href: string };
+  /** The cards under the icons, in reading order. */
+  readonly cards: readonly MidiHubCard[];
 }
 
 export const midiHub: MidiHub = {
@@ -59,5 +73,12 @@ export const midiHub: MidiHub = {
       note: '@midi4all',
     },
   ],
-  home: { label: 'Sitio principal', href: '/' },
+  cards: [
+    {
+      label: 'Noche de los museos 2026',
+      href: '/midi-links/noche-museos/',
+      onlyOnPage: true,
+    },
+    { label: 'Sitio principal', href: '/' },
+  ],
 };

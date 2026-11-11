@@ -12,6 +12,12 @@ MIDI/
 # Build
 dist/
 
+# Secretos locales. El visualizador en vivo lee la API key de Drive desde acá;
+# `.env.example` sí se versiona porque documenta las variables sin valores.
+.env
+.env.*
+!.env.example
+
 # Material de marca: se versiona el manual, la guia de uso y los SVG.
 # Los espejos de formato (impresion, PNG, WebP, favicons) son regenerables
 # desde el vector y no son revisables como codigo. Los favicons web ya viven

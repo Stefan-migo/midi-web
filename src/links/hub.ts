@@ -2,7 +2,7 @@
  * The contact hub, rendered once and mounted twice: as the whole of the hidden
  * `/midi-links/` page and as the panel behind every block of `/contacto/`.
  *
- * Order follows the owner's reference: mark, name, subtitle, icon row, one card.
+ * Order follows the owner's reference: mark, name, subtitle, icon row, cards.
  * The mark is a solid square, not a circle: the identity fixes zero radii.
  */
 
@@ -18,6 +18,11 @@ export interface HubOptions {
   readonly surface: HubSurface;
   /** The label voice above the mark; the panel and the page use different ones. */
   readonly kicker?: string;
+  /**
+   * Which surface of the design this mount is. A card marked `onlyOnPage` is
+   * content of the hidden page only, never of the contact panel.
+   */
+  readonly placement: 'page' | 'panel';
   /** `1` when the hub is the page, `2` when it is the panel's content. */
   readonly headingLevel?: 1 | 2;
   /** The panel labels its dialog with this id. */
@@ -93,19 +98,22 @@ export function renderMidiHub(options: HubOptions): HTMLElement {
 
   const list = document.createElement('ul');
   list.className = 'midi-hub-links';
-  const item = document.createElement('li');
-  const card = document.createElement('a');
-  card.className = 'midi-hub-card';
-  card.href = hrefFor(midiHub.home.href);
-  const cardLabel = document.createElement('span');
-  cardLabel.textContent = midiHub.home.label;
-  const arrow = document.createElement('span');
-  arrow.className = 'midi-hub-card-arrow';
-  arrow.setAttribute('aria-hidden', 'true');
-  arrow.textContent = '↗';
-  card.append(cardLabel, arrow);
-  item.append(card);
-  list.append(item);
+  for (const entry of midiHub.cards) {
+    if (entry.onlyOnPage && options.placement !== 'page') continue;
+    const item = document.createElement('li');
+    const card = document.createElement('a');
+    card.className = 'midi-hub-card';
+    card.href = hrefFor(entry.href);
+    const cardLabel = document.createElement('span');
+    cardLabel.textContent = entry.label;
+    const arrow = document.createElement('span');
+    arrow.className = 'midi-hub-card-arrow';
+    arrow.setAttribute('aria-hidden', 'true');
+    arrow.textContent = '↗';
+    card.append(cardLabel, arrow);
+    item.append(card);
+    list.append(item);
+  }
 
   body.append(mark, title, subtitle, icons, list);
   root.append(body);
