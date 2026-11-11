@@ -38,7 +38,8 @@ El primer corte quedó en 713 líneas (T1 + T2) porque el contrato de la fuente 
 - **L7** (decisión, S4): las miniaturas salen de `drive.google.com/thumbnail`, no del archivo original: Google redimensiona, convierte HEIC de teléfono y no gasta cuota de Drive.
 - **L8** (decisión, S6): `Cache-Control: public, s-maxage=10, stale-while-revalidate=60` en el proxy; los errores van con `no-store` para no cachear una caída de Drive.
 - **L9** (límite del harness): `.env.example` no se pudo escribir (política de rutas sensibles). Las variables quedan documentadas en el README y `.env` ya está ignorado por git.
-- **L10** (dueño, decisión): «Cerrar sin ella: queda documentada como prueba faltante en odd/tasks/noche-museos.md y la rama espera tu review + la key.» → la verificación independiente del item 5 no se reintenta por iniciativa propia y queda como prueba faltante P3. La rama no se declara verificada, queda a la espera de review humana y de la credencial.
+- **L10** (dueño, decisión): «Cerrar sin ella: queda documentada como prueba faltante en odd/tasks/noche-museos.md y la rama espera tu review + la key.» → la verificación independiente del item 5 no se reintenta por iniciativa propia y queda como prueba faltante P3.
+- **L11** (dueño, verbatim): «ok funciona correctamente. push pr y merge para llevarlo a produccion» → sobre el preview del PR #13 (`midi-web-git-feat-noche-museos-midi6.vercel.app`) la función devolvió la lista real de la carpeta y el visor mostró las fotos. Cierra P1 y P2 por confirmación del dueño, no por verificación técnica del harness. Autoriza el merge a `main`.
 
 ## Verificación
 
@@ -60,14 +61,18 @@ Comportamiento medido sobre el build real con Chrome headless + CDP (proxy simul
 
 ## Pruebas faltantes
 
-La rama **no se declara verificada**. El `Risk: item 5` (función serverless + variables de entorno en el deploy) exige una pasada independiente que no se pudo completar:
+El `Risk: item 5` (función serverless + variables de entorno en el deploy) exige una pasada independiente que no se pudo completar. Estado al momento del merge:
 
-| ID | Prueba | Estado | Qué la desbloquea |
+| ID | Prueba | Estado | Evidencia |
 | --- | --- | --- | --- |
-| P1 | Lectura real contra la carpeta de Drive del evento | Faltante | `GOOGLE_DRIVE_API_KEY` (README, «Visualizador en vivo») |
-| P2 | La función corriendo en Vercel: headers de caché reales, env vars del proyecto | Faltante | Deploy con las variables cargadas + `curl` a `/api/fotos` |
+| P1 | Lectura real contra la carpeta de Drive del evento | ✅ Cubierta | Confirmación del dueño sobre el preview del PR #13 (L11) |
+| P2 | La función corriendo en Vercel: headers de caché reales, env vars del proyecto | ✅ Cubierta | Mismo preview; env vars cargadas en Production + Preview |
 | P3 | Verificación independiente del item 5 | **No disponible** | Un pedido explícito de un intento nuevo cuando el proveedor vuelva |
 
 P3 detalle: `gentle-ai-verify` falló con `provider_unavailable` (caída del proveedor del subagente, no del código). Por política no se reintenta sin pedido explícito del dueño; la decisión L10 fue cerrar dejándola registrada acá.
 
-Mientras no haya credencial, el visualizador muestra el estado «sin conexión con el álbum · reintentando» con el CTA al álbum, que sí está verificado (tabla de arriba) y es el comportamiento correcto.
+Sin credencial, el visualizador muestra el estado «sin conexión con el álbum · reintentando» con el CTA al álbum, verificado en la tabla de arriba.
+
+## Pendiente operativo antes del evento
+
+**Deployment Protection.** Los dominios del proyecto (`midi-web-midi6.vercel.app` y los previews) responden `302` hacia «Protected by Vercel Authentication». Mientras siga así, el QR lleva a un login de Vercel en vez de a las fotos. Se resuelve en Settings → Deployment Protection (Standard Protection deja producción pública, o un Protection Bypass for Automation). Es configuración de Vercel, no código.
