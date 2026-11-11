@@ -99,7 +99,7 @@
 .midi-hub-icon:focus-visible { outline: 2px dashed var(--hub-fg); outline-offset: 3px; }
 .midi-hub-glyph { display: block; width: 26px; height: 26px; }
 
-.midi-hub-links { width: 100%; margin: 34px 0 0; padding: 0; list-style: none; }
+.midi-hub-links { display: grid; gap: 10px; width: 100%; margin: 34px 0 0; padding: 0; list-style: none; }
 .midi-hub-card {
   display: flex;
   align-items: center;

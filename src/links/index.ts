@@ -14,6 +14,7 @@ if (mount) {
       surface: 'ink',
       kicker: midiHub.kicker,
       headingLevel: 1,
+      placement: 'page',
     }),
   );
 }
