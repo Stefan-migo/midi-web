@@ -24,13 +24,15 @@ npm run typecheck  # tsc --noEmit
 
 `VITE_BASE` define la ruta base de los assets, enlaces y URLs generadas (por
 ejemplo, `/midi-web/` para un subdirectorio). `SITE_URL` define el origen
-público y por defecto es `https://midi4all.art`; al compilar genera canonical,
+público y por defecto es `https://holamidi.com`; al compilar genera canonical,
 `og:url`, `sitemap.xml` y la referencia a ese sitemap en `robots.txt`. Para
 compilar un preview en otro origen: `SITE_URL=https://otro.dominio npm run build`.
 
 `npm run verify` corre typecheck, build y `check:routes`, que verifica los
-documentos generados: título y description propios por ruta, canonical absoluta,
-un solo `aria-current`, sitemap completo y ausencia de navegación por hash.
+documentos generados: título y description propios por ruta, origen de la
+canonical, un solo `aria-current`, sitemap completo y ausencia de navegación por
+hash. El origen esperado es el default del build, o `SITE_URL` cuando el build
+se compiló con esa variable.
 
 ## Visualizador en vivo
 
@@ -77,7 +79,7 @@ mismas ~360 lecturas por hora que con una.
 
 Si la función no estuviera disponible, `source: 'drive'` en
 `src/content/noche-museos.ts` pasa la lectura al navegador con `VITE_DRIVE_API_KEY`
-(restringida a `midi4all.art/*` y `localhost:5173/*`). Es un atajo de
+(restringida a `holamidi.com/*` y `localhost:5173/*`). Es un atajo de
 emergencia: cuesta una lectura por visitante y no oculta la key.
 
 `npm run check:viewer` fija el contrato de esa fuente: normalización del link,
