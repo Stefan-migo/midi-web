@@ -50,12 +50,12 @@ export const site: Site = {
       order: 3,
       navLabel: 'Contacto', // web/index.html:13
       title: 'Una señal, un encuentro', // web/app.js:10
-      subtitle: 'holamidi.info@gmail.com', // web/app.js:61
+      subtitle: 'contacto@holamidi.com', // web/app.js:61, the official address since the domain moved
       body: {
         heading: 'Abrir un diálogo.', // web/app.js:91
         paragraphs: [],
         links: [
-          { label: 'holamidi.info@gmail.com', href: 'mailto:holamidi.info@gmail.com', kind: 'mailto' },
+          { label: 'contacto@holamidi.com', href: 'mailto:contacto@holamidi.com', kind: 'mailto' },
           { label: 'Instagram / midi4all', href: 'https://www.instagram.com/midi4all/', kind: 'social' },
           { label: 'TikTok / midi4all', href: 'https://www.tiktok.com/@midi4all', kind: 'social' },
         ],
