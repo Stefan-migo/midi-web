@@ -56,9 +56,9 @@ export const midiHub: MidiHub = {
     },
     {
       label: 'Correo',
-      href: 'mailto:holamidi.info@gmail.com',
+      href: 'mailto:contacto@holamidi.com',
       icon: 'mail',
-      note: 'holamidi.info@gmail.com',
+      note: 'contacto@holamidi.com',
     },
     {
       label: 'TikTok',
