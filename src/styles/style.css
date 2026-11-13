@@ -70,6 +70,21 @@
 .scene-copy { bottom: auto; width: min(240px, calc(100vw - 36px)); }
 .scene-copy h1 { line-height: 1; overflow-wrap: anywhere; }
 .scene-copy p { line-height: 1.5; overflow-wrap: anywhere; }
+
+/* The home scene is the artwork alone. The copy stays in the document — clipping
+   keeps the heading readable for crawlers and screen readers, where
+   `display: none` would hide it from both — and `data-scene` is the live hook,
+   because the scene index changes in place as the world moves. */
+#world[data-scene="0"] .scene-copy {
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  clip-path: inset(50%);
+}
 @media (max-width: 650px) { .signature { width: 140px; } }
 
 #world .signature, #world .scene-copy { top: 0; left: 0; }

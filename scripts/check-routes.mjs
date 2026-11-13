@@ -158,6 +158,21 @@ for (const route of ROUTES) {
     headings.set(route.path, heading);
   });
 
+  // The home scene is the artwork alone: it ships no visible copy at all, but it
+  // keeps its heading in the document so the page still declares what it is.
+  // `#world[data-scene="0"]` is the live hook the stylesheet clips, so the copy
+  // is hidden instead of removed.
+  if (route.order === 0) {
+    expect('clean home copy', () => {
+      const subtitle = extract(html, /<p id="scene-subtitle">([\s\S]*?)<\/p>/i, '#scene-subtitle');
+      assert.equal(subtitle.trim(), '', 'the home scene must ship no subtitle');
+      const heading = extract(html, /<h1\b[^>]*id="scene-title"[^>]*>([\s\S]*?)<\/h1>/i, '#scene-title').trim();
+      assert.ok(heading.length > 0, 'the home heading must survive for crawlers and screen readers');
+      const documentTitle = extract(html, /<title>([\s\S]*?)<\/title>/i, '<title>').trim();
+      assert.equal(documentTitle, heading, 'the home <title> must be the scene heading, with no subtitle appended');
+    });
+  }
+
   expect('scene ordinal', () => {
     assert.match(
       html,

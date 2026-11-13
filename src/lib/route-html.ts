@@ -52,7 +52,13 @@ function truncate(value: string, limit: number): string {
 function describe(scene: Scene, site: Site): string {
   const body = scene.body?.paragraphs.join(' ').trim() ?? '';
   if (body.length > 0) return truncate(body, 160);
-  return truncate(`${scene.title}. ${scene.subtitle}. ${site.name}, colectivo artístico.`, 160);
+  // A subtitle is optional, so an empty one must not leave a dangling sentence
+  // behind, and a scene named after the collective must not repeat `site.name`
+  // right before it.
+  const lead = [scene.title, scene.subtitle]
+    .map((part) => part.trim())
+    .filter((part) => part.length > 0 && part !== site.name);
+  return truncate([...lead, `${site.name}, colectivo artístico.`].join('. '), 160);
 }
 
 function revealMarkup(scene: Scene): string {
@@ -144,7 +150,12 @@ export function renderRouteHtml(
   options: SiteOptions,
 ): string {
   const { scene } = route;
-  const title = scene.order === 0 ? `${site.name} / ${scene.subtitle}` : `${scene.title} — ${site.name}`;
+  // The home scene ships no tagline, so it is titled after the collective alone.
+  const title = scene.order === 0
+    ? scene.subtitle
+      ? `${site.name} / ${scene.subtitle}`
+      : scene.title
+    : `${scene.title} — ${site.name}`;
   const description = describe(scene, site);
 
   let html = shell;
