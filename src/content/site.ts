@@ -15,7 +15,10 @@ export const site: Site = {
       order: 0,
       navLabel: 'Inicio', // web/index.html:13
       title: 'MIDI', // web/app.js:10
-      subtitle: 'mamá insiste en que deje las interfaces', // web/app.js:61, tagline changed at the owner's request
+      // The home scene is the artwork alone: no subtitle ships with it. The
+      // copy is clipped in CSS instead of deleted, so the heading still reaches
+      // crawlers and screen readers. Owner request, 2026-11-13.
+      subtitle: '',
     },
     {
       id: 'portafolio',
