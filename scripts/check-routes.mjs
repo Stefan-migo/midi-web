@@ -21,6 +21,20 @@ const ROUTES = [
   { file: 'exploraciones/index.html', path: '/exploraciones/', order: 4, type: 'CollectionPage' },
 ];
 
+/**
+ * The canonical home of the site. It is written twice on purpose: once here and
+ * once as `DEFAULT_SITE_URL` in `vite.config.ts`. A check that imported the
+ * build's own constant could never catch that constant drifting to a domain
+ * the collective no longer owns, which is exactly the regression that would
+ * repoint every canonical, `og:url` and sitemap entry without failing anything.
+ * A build that overrides the origin with `SITE_URL` is checked against that
+ * override, so preview builds stay valid.
+ */
+const DEFAULT_ORIGIN = 'https://holamidi.com';
+const expectedOrigin = process.env['SITE_URL']
+  ? new URL(process.env['SITE_URL']).origin
+  : DEFAULT_ORIGIN;
+
 const failures = [];
 const motionSource = await readFile(join('src', 'motion', 'motion.mjs'), 'utf8');
 const artworkRatio = extract(motionSource, /preserveAspectRatio="([^"]+)"/, 'generated artwork preserveAspectRatio');
@@ -144,6 +158,7 @@ for (const route of ROUTES) {
     const href = extract(html, /rel="canonical" href="([^"]+)"/i, 'rel="canonical"');
     assert.match(href, /^https?:\/\//, `canonical is not absolute: ${href}`);
     assert.ok(href.endsWith(route.path), `canonical ${href} does not end with ${route.path}`);
+    assert.equal(new URL(href).origin, expectedOrigin, `canonical origin is not ${expectedOrigin}`);
     const ogUrl = extract(html, /property="og:url" content="([^"]+)"/i, 'og:url');
     assert.equal(ogUrl, href, 'og:url does not equal the canonical URL');
   });

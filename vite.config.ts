@@ -10,7 +10,7 @@ import { llmsTxt, robotsTxt, sitemapXml } from './src/lib/seo';
  * (canonical, `og:url`, sitemap) derives from it, so there is exactly one place
  * to change when the domain changes.
  */
-const DEFAULT_SITE_URL = 'https://midi4all.art';
+const DEFAULT_SITE_URL = 'https://holamidi.com';
 
 /**
  * Emits one complete HTML document per route from the shared shell, so every
