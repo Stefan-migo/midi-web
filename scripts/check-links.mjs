@@ -6,7 +6,11 @@ const documents = [
   ['dist/midi-links/index.html', 'midi-links/index.html'],
   ['dist/midi-links/add/index.html', 'midi-links/add/index.html'],
   ['dist/midi-links/noche-museos/index.html', 'midi-links/noche-museos/index.html'],
+  ['dist/brief/index.html', 'brief/index.html'],
 ];
+
+/** Paths that must stay out of the crawlable indexes and out of the site nav. */
+const hiddenPaths = ['/midi-links', '/brief'];
 
 async function fail(file, message) {
   console.error(`${file}: ${message}`);
@@ -38,11 +42,26 @@ if (viewer && !/id="viewer"/.test(viewer))
   await fail(documents[2][0], 'missing the #viewer mount the live viewer renders into');
 if (viewer && !/<script[^>]+type="module"[^>]+src="[^"]+\.js"/.test(viewer))
   await fail(documents[2][0], 'missing its bundled module entry');
+// The brief is private for the same reason the links pages are: it holds the
+// collective's own reflections, not published work. It renders its form at
+// runtime, so the shell only needs the mount point.
+const brief = content.get('brief/index.html');
+if (brief && !/id="brief"/.test(brief)) await fail(documents[3][0], 'missing the #brief mount the form renders into');
+if (brief && !/<script[^>]+type="module"[^>]+src="[^"]+\.js"/.test(brief))
+  await fail(documents[3][0], 'missing its bundled module entry');
+// The form says where the answers go, and that they stay private. Nobody should
+// have to guess, so the sentence is pinned at the source that renders it.
+const briefSource = await readFile(path.join('src', 'brief', 'app.ts'), 'utf8').catch(() => '');
+if (!briefSource.includes('No se publican en la web.'))
+  await fail('src/brief/app.ts', 'missing the statement that the answers are not published');
+
 for (const relative of ['sitemap.xml', 'llms.txt']) {
   const file = `dist/${relative}`;
   try {
     const text = await readFile(path.join(root, relative), 'utf8');
-    if (text.includes('/midi-links')) await fail(file, 'contains a hidden MIDI links path');
+    for (const hidden of hiddenPaths) {
+      if (text.includes(hidden)) await fail(file, `contains the hidden path ${hidden}`);
+    }
   } catch {
     await fail(file, 'required site index is missing');
   }
@@ -55,7 +74,8 @@ async function scan(dir) {
     if (entry.isDirectory()) await scan(file);
     else if (entry.name.endsWith('.html') && !documents.some(([, rel]) => path.resolve(root, rel) === file)) {
       const html = await readFile(file, 'utf8');
-      if (/<nav\b[^>]*>[\s\S]*?\/midi-links(?:\/|\b)/i.test(html)) await fail(path.relative(process.cwd(), file), 'nav contains a hidden MIDI links path');
+      const exposed = hiddenPaths.find((hidden) => new RegExp(`<nav\\b[^>]*>[\\s\\S]*?${hidden}(?:/|\\b)`, 'i').test(html));
+      if (exposed) await fail(path.relative(process.cwd(), file), `nav contains the hidden path ${exposed}`);
     }
   }
 }
