@@ -86,6 +86,45 @@ emergencia: cuesta una lectura por visitante y no oculta la key.
 orden y deduplicado de la lista, y que ningún error —ni la key— se sirva como
 éxito cacheado.
 
+## Brief individual
+
+`/brief/` es una página privada (`noindex, nofollow`, fuera del sitemap y del
+menú) donde cada integrante responde el brief antes de la reunión. Mientras se
+escribe, el borrador queda en el propio dispositivo, y las respuestas se pueden
+volver a actualizar desde la misma página hasta la reunión.
+
+### Conectarlo a Supabase
+
+1. Crear un proyecto en Supabase y correr `supabase/brief.sql` en el SQL Editor.
+2. Copiar la URL del proyecto (`https://<ref>.supabase.co`, sin `/rest/v1`) y la
+   **secret key** (Project Settings → API Keys, formato `sb_secret_...`). Esa es
+   la que bypassea row level security; la publishable **no** sirve para escribir
+   acá, porque la tabla no tiene ninguna policy. La función manda la key en
+   `apikey`, y solo la agrega como `Bearer` cuando es un JWT legacy: PostgREST
+   rechaza las keys nuevas como bearer (PGRST301).
+3. Definir en Vercel, nunca con prefijo `VITE_`:
+   - `SUPABASE_URL`
+   - `SUPABASE_SECRET_KEY` — el nombre que inyecta la integración de Supabase en
+     Vercel. Si el deployment es viejo y usa `SUPABASE_SERVICE_ROLE_KEY`, también
+     se lee: Supabase depreca ese nombre a fin de 2026, así que el nuevo gana
+     cuando están las dos.
+   - `BRIEF_ACCESS_CODE` — la clave que comparte el colectivo.
+   - `BRIEF_ROUND` (opcional) — etiqueta de la edición; por defecto `fundamentos`.
+4. Volver a desplegar.
+
+Sin esas variables el endpoint responde `503 not_configured` y no guarda nada:
+mejor que falle a que acepte respuestas hacia el vacío.
+
+### Leer las respuestas
+
+La tabla no es accesible desde el navegador: se lee desde el panel de Supabase
+o exportándola a CSV para la síntesis. La consulta queda al final de
+`supabase/brief.sql`.
+
+`npm run check:brief` fija el contrato del endpoint sin base de datos: código de
+acceso, límites de cada respuesta, validación, actualización por id y que la
+`service_role` key nunca vuelva en una respuesta.
+
 ## Dónde vive cada cosa
 
 | Ruta | Qué es |
@@ -94,7 +133,9 @@ orden y deduplicado de la lista, y que ningún error —ni la key— se sirva co
 | `src/content/` | Todo el texto, los links y la galería, como datos tipados. |
 | `src/styles/` | Hoja de estilos. |
 | `src/main.ts` | Motor de escenas: pinta el arte y maneja la interacción. |
-| `api/` | Funciones de Vercel: el proxy del visualizador en vivo. |
+| `api/` | Funciones de Vercel: el proxy del visualizador en vivo y la escritura del brief. |
+| `supabase/` | Esquema SQL del brief. Se corre a mano en el panel de Supabase. |
+| `brief/` | Página privada del brief individual. Ver arriba. |
 | `public/assets/` | Logos y piezas del archivo. |
 | `remotion/` | Proyecto de autoría de las animaciones, para verlas cuadro a cuadro. |
 | `web/` | Referencia visual congelada. Ver abajo. |
